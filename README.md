@@ -4,11 +4,11 @@ A CLI that lists coding LLMs with their **OpenRouter prices** and **arena.ai Web
 
 ## Columns
 
-| Arena # | Model | In $/M | Out $/M | Elo | ID |
-| ---: | --- | ---: | ---: | ---: | --- |
-| arena.ai WebDev rank (#1 best) | OpenRouter model name | input price per million tokens | output price per million tokens | arena Elo | OpenRouter model ID (copy-paste to use the model) |
+| Arena # | Model | In $/M | Out $/M | Disc | Elo | ID |
+| ---: | --- | ---: | ---: | ---: | ---: | --- |
+| arena.ai WebDev rank (#1 best) | OpenRouter model name | input price per million tokens | output price per million tokens | provider discount | arena Elo | OpenRouter model ID (copy-paste to use the model) |
 
-Prices come live from the [OpenRouter model catalog](https://openrouter.ai/api/v1/models).
+Prices come live from the [OpenRouter model catalog](https://openrouter.ai/api/v1/models), then refined per model with the cheapest provider from the [endpoints API](https://openrouter.ai/api/v1/models) — the same "lowest across providers" price the OpenRouter website shows. Cheapest prices are cached for 24h at `~/.config/llm-leaders/best_prices.json`; the first `--all` run takes ~20s to fetch all providers, subsequent runs are instant. `--refresh` bypasses the cache.
 Ranks come from the [arena.ai WebDev leaderboard](https://arena.ai/leaderboard/code/webdev), scraped from the page's embedded payload and cached for 24h at `~/.config/llm-leaders/arena.json`.
 
 The terminal table uses heat scales, all computed over the rows actually displayed so they stay meaningful under any filter combination:
@@ -44,6 +44,15 @@ llm-leaders --max-output 1
 # keep only models ranked in the arena top 20 (models with no arena score
 # are dropped when this filter is set)
 llm-leaders --max-rank 20
+
+# keep only free models / only discounted models
+llm-leaders --free
+llm-leaders --discounted
+
+# fuzzy search by name or ID (subsequence match, multi-word AND)
+llm-leaders --search "glm"
+llm-leaders --search "kimi k3"        # both words must match
+llm-leaders --all --search "opus"     # search across the whole catalog
 
 # browse the entire OpenRouter catalog (~400 models) instead of your
 # curated list — combines with the filters above

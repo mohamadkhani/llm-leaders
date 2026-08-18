@@ -38,6 +38,18 @@ struct Cli {
     #[arg(long, global = true)]
     max_rank: Option<u64>,
 
+    /// Keep only free models (input price 0).
+    #[arg(long, global = true)]
+    free: bool,
+
+    /// Keep only models with an active provider discount.
+    #[arg(long, global = true)]
+    discounted: bool,
+
+    /// Fuzzy-filter by model name or ID (e.g. "glm", "kimi-k3", "qwen coder").
+    #[arg(long, global = true)]
+    search: Option<String>,
+
     /// Show the full OpenRouter catalog instead of your curated models.txt list.
     #[arg(long, global = true)]
     all: bool,
@@ -83,6 +95,9 @@ fn main() -> Result<()> {
             max_input: cli.max_input,
             max_output: cli.max_output,
             max_rank: cli.max_rank,
+            free: cli.free,
+            discounted: cli.discounted,
+            search: cli.search,
             all: cli.all,
             refresh: cli.refresh,
         })?,
@@ -96,6 +111,9 @@ struct TableOpts {
     max_input: Option<f64>,
     max_output: Option<f64>,
     max_rank: Option<u64>,
+    free: bool,
+    discounted: bool,
+    search: Option<String>,
     all: bool,
     refresh: bool,
 }
@@ -242,6 +260,7 @@ struct Row {
     name: String,
     input: Option<f64>,
     output: Option<f64>,
+    discount: Option<f64>,
     rank: Option<u64>,
     elo: Option<f64>,
 }
@@ -261,17 +280,30 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     let catalog = openrouter::fetch_models()?;
     let scores = arena::get_scores(opts.refresh)?;
 
+    // Cheapest-provider prices (matches what the OpenRouter site shows),
+    // cached 24h on disk. In --all mode this covers the whole catalog; the
+    // first uncached --all run takes ~20s to fetch ~400 endpoints.
+    let id_list: Vec<String> = match &ids {
+        Some(list) => list.clone(),
+        None => catalog.iter().map(|m| m.id.clone()).collect(),
+    };
+    let best_prices = openrouter::fetch_best_prices(&id_list, opts.refresh)?;
+
     let mut rows: Vec<Row> = Vec::new();
     let build_row = |model: &openrouter::Model| {
         let arena = match_score::score_for(model, &scores).map(|s| (s.rank, s.rating));
         let (rank, elo) = arena
             .map(|(rk, e)| (Some(rk), Some(e)))
             .unwrap_or((None, None));
+        // Prefer cheapest-provider pricing when we have it; fall back to the
+        // catalog's default-endpoint price.
+        let best = best_prices.get(&model.id);
         Row {
             id: model.id.clone(),
             name: model.name.clone(),
-            input: model.input_per_m(),
-            output: model.output_per_m(),
+            input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
+            output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
+            discount: best.and_then(|b| b.discount),
             rank,
             elo,
         }
@@ -295,6 +327,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                             pricing: openrouter::Pricing {
                                 prompt: "0".to_string(),
                                 completion: "0".to_string(),
+                                discount: None,
                             },
                         };
                         rows.push(build_row(&synth));
@@ -320,6 +353,22 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     }
     if let Some(max_rk) = opts.max_rank {
         rows.retain(|r| r.rank.map_or(false, |rk| rk <= max_rk));
+    }
+    if opts.free {
+        rows.retain(|r| r.input.map_or(false, |p| p <= 0.0));
+    }
+    if opts.discounted {
+        rows.retain(|r| r.discount.map_or(false, |d| d > 0.0));
+    }
+    if let Some(q) = &opts.search {
+        let q = q.to_lowercase();
+        // Split into words; each word must fuzzy-match (subsequence) the
+        // name or the id.
+        let words: Vec<String> = q.split_whitespace().map(|w| w.to_string()).collect();
+        rows.retain(|r| {
+            let hay = format!("{} {}", r.name, r.id).to_lowercase();
+            words.iter().all(|w| fuzzy_contains(&hay, w))
+        });
     }
     let dropped = before - rows.len();
 
@@ -394,6 +443,31 @@ fn fmt_elo(r: Option<f64>) -> String {
         Some(e) => format!("{:.0}", e),
         None => "—".to_string(),
     }
+}
+
+fn fmt_discount(d: Option<f64>) -> String {
+    match d {
+        Some(f) if f > 0.0 => format!("-{}%", (f * 100.0).round() as u64),
+        _ => "—".to_string(),
+    }
+}
+
+/// Case-insensitive subsequence match: every char of `needle` appears in
+/// `hay` in order (skipping non-matching chars). "g52" matches "glm 5.2".
+fn fuzzy_contains(hay: &str, needle: &str) -> bool {
+    let mut it = hay.chars();
+    'outer: for n in needle.chars() {
+        if n.is_whitespace() {
+            continue;
+        }
+        for h in it.by_ref() {
+            if h == n {
+                continue 'outer;
+            }
+        }
+        return false;
+    }
+    true
 }
 
 /// Map t in [0,1] onto the green -> yellow -> red ramp (truecolor).
@@ -508,6 +582,7 @@ fn print_table(rows: &[Row]) {
         styled_cell("Model".to_string(), comfy_table::Color::Reset, true),
         styled_cell("In $/M".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Out $/M".to_string(), comfy_table::Color::Reset, true),
+        styled_cell("Disc".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Elo".to_string(), comfy_table::Color::Reset, true),
         styled_cell("ID".to_string(), comfy_table::Color::Reset, true),
     ]);
@@ -570,6 +645,15 @@ fn print_table(rows: &[Row]) {
                 price_heat(r.output, out_min, out_max).unwrap_or(comfy_table::Color::Reset),
                 false,
             ),
+            styled_cell(
+                fmt_discount(r.discount),
+                if r.discount.map_or(false, |d| d > 0.0) {
+                    comfy_table::Color::Green
+                } else {
+                    comfy_table::Color::Reset
+                },
+                r.discount.map_or(false, |d| d >= 0.30),
+            ),
             styled_cell(fmt_elo(r.elo), elo_heat(r.elo, elo_min, elo_max), false),
             styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false),
         ]);
@@ -610,15 +694,16 @@ fn color_borders(table: &str, color: &str, reset: &str) -> String {
 }
 
 fn print_markdown(rows: &[Row]) {
-    println!("| Arena # | Model | In $/M | Out $/M | Elo | ID |");
-    println!("|---:|---|---:|---:|---:|---|");
+    println!("| Arena # | Model | In $/M | Out $/M | Disc | Elo | ID |");
+    println!("|---:|---|---:|---:|---:|---:|---|");
     for r in rows {
         println!(
-            "| {} | {} | {} | {} | {} | `{}` |",
+            "| {} | {} | {} | {} | {} | {} | `{}` |",
             fmt_rank(r.rank),
             r.name,
             fmt_price(r.input),
             fmt_price(r.output),
+            fmt_discount(r.discount),
             fmt_elo(r.elo),
             r.id
         );
