@@ -2,6 +2,10 @@
 
 A CLI that lists coding LLMs with their **OpenRouter prices** and **arena.ai WebDev Elo** score, side by side.
 
+Example — `llm-leaders --all --max-input 1.5 --max-rank 50` (cheapest-input price ≤ $1.50/M, arena rank ≤ 50, across the full OpenRouter catalog):
+
+![llm-leaders --all --max-input 1.5 --max-rank 50](assets/example.png)
+
 ## Columns
 
 | Arena # | Model | In $/M | Out $/M | Disc | Elo | ID |
