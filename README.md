@@ -86,3 +86,17 @@ llm-leaders list                   # print the current list
 cargo build --release
 # binary at target/release/llm-leaders
 ```
+
+## Packaging (Arch / AUR)
+
+A tagged push (`git tag v0.1.0 && git push --tags`) triggers [.gitea/workflows/release.yml](.gitea/workflows/release.yml), which runs in an `archlinux:latest` container and:
+
+1. builds the release binary and UPX-compresses it,
+2. packs `llm-leaders-<ver>-x86_64-unknown-linux-gnu.tar.gz` (binary + LICENSE),
+3. lints the package plan with `namcap`,
+4. publishes a GitHub/Gitea Release, and
+5. updates the `llm-leaders-bin` AUR package — [packaging/arch/PKGBUILD](packaging/arch/PKGBUILD) is the canonical source; [packaging/arch/publish-aur.sh](packaging/arch/publish-aur.sh) clones AUR, injects the tarball's real `b2sum`, regenerates `.SRCINFO`, and pushes over SSH.
+
+The AUR push authenticates with an SSH key registered to your AUR account, stored as the `AUR_SSH_PRIVATE_KEY` action secret. That key is account-wide (AUR has no per-package deploy keys), so treat it as a credential.
+
+Install from AUR: `yay -S llm-leaders-bin`.

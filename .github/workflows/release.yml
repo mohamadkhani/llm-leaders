@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:        # manual trigger for testing without a tag
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    permissions:
+      contents: write        # to create the GitHub/Gitea release
+    steps:
+      # ---------------------------------------------------------------- setup
+      - name: Install build deps
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git upx tar openssh docker
+
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # --------------------------------------------------------------- build
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Compress binary with UPX
+        run: upx --best --lzma target/release/llm-leaders
+
+      # ----------------------------------------------------------- tarball
+      - name: Package release tarball
+        id: tar
+        run: |
+          # VERSION = bare version, no leading 'v' (tag v0.1.0 -> 0.1.0)
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          mkdir -p dist
+          cp target/release/llm-leaders dist/
+          cp COPYING dist/
+          ( cd dist && tar czf "../llm-leaders-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+              llm-leaders COPYING )
+          echo "tarball=$(pwd)/llm-leaders-${VERSION}-x86_64-unknown-linux-gnu.tar.gz" >> "$GITHUB_OUTPUT"
+
+      # ----------------------------------------------------------- namcap
+      # namcap PKGBUILD lints the recipe itself (missing depends, bad perms,
+      # wrong install paths) — no need to build a package, which makepkg
+      # refuses to do as root anyway (CI containers run as root).
+      - name: Lint the PKGBUILD with namcap
+        run: |
+          pacman -S --noconfirm namcap
+          cp packaging/arch/PKGBUILD /tmp/PKGBUILD
+          sed -i "s|^pkgver=.*|pkgver=${{ steps.tar.outputs.version }}|" /tmp/PKGBUILD
+          sed -i "s|b2sums_x86_64=('PLACEHOLDER')|b2sums_x86_64=('SKIP')|" /tmp/PKGBUILD
+          namcap /tmp/PKGBUILD
+
+      # ----------------------------------------------------------- publish GH release
+      - name: Publish GitHub release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.tar.outputs.tarball }}
+
+      # ----------------------------------------------------------- publish AUR
+      - name: Publish AUR package
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          VERSION: ${{ steps.tar.outputs.version }}
+          TARBALL: ${{ steps.tar.outputs.tarball }}
+        run: packaging/arch/publish-aur.sh
