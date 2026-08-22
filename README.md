@@ -78,7 +78,12 @@ llm-leaders list                   # print the current list
 
 ## The curated list
 
-[models.txt](models.txt) holds the OpenRouter IDs to display, one per line (`#` comments allowed). Seed it with the strongest coding LLMs and edit freely — the main command renders exactly those rows.
+The curated list is loaded from:
+1. `./models.txt` in the current working directory (if present), or
+2. `~/.config/llm-leaders/models.txt` (global user config).
+
+If neither file exists, `llm-leaders` automatically falls back to showing all models (`--all`).
+Running `llm-leaders add` creates and updates `~/.config/llm-leaders/models.txt` automatically (or `./models.txt` if run inside the project repo). One OpenRouter model ID per line (`#` comments allowed).
 
 ## Build
 

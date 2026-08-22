@@ -1,7 +1,6 @@
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
 use comfy_table::{ContentArrangement, Table};
-use std::path::PathBuf;
 
 mod arena;
 mod match_score;
@@ -75,18 +74,22 @@ enum Command {
     List,
 }
 
-fn list_path() -> PathBuf {
-    PathBuf::from("models.txt")
-}
-
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Some(Command::Add { ids }) => cmd_add(&ids)?,
         Some(Command::Remove { ids }) => cmd_remove(&ids)?,
         Some(Command::List) => {
-            for id in models_list::read_ids(&list_path())? {
-                println!("{id}");
+            let path = models_list::find_models_path()?;
+            match path {
+                Some(p) => {
+                    for id in models_list::read_ids(&p)? {
+                        println!("{id}");
+                    }
+                }
+                None => {
+                    println!("No models.txt found (checked ./models.txt and ~/.config/llm-leaders/models.txt).");
+                }
             }
         }
         None => render_table(&TableOpts {
@@ -119,7 +122,7 @@ struct TableOpts {
 }
 
 fn cmd_add(ids: &[String]) -> Result<()> {
-    let path = list_path();
+    let path = models_list::target_models_path()?;
     let catalog = openrouter::fetch_models()?;
     let existing: std::collections::HashSet<String> =
         models_list::read_ids(&path)?.into_iter().collect();
@@ -135,7 +138,7 @@ fn cmd_add(ids: &[String]) -> Result<()> {
         return Ok(());
     }
     let added = models_list::add_ids(&path, &to_add)?;
-    println!("Added {} model(s):", added.len());
+    println!("Added {} model(s) to {}:", added.len(), path.display());
     for id in &added {
         println!("  + {id}");
     }
@@ -143,7 +146,7 @@ fn cmd_add(ids: &[String]) -> Result<()> {
 }
 
 fn cmd_remove(ids: &[String]) -> Result<()> {
-    let path = list_path();
+    let path = models_list::target_models_path()?;
     let current = models_list::read_ids(&path)?;
     let to_remove: Vec<String> = if ids.is_empty() {
         interactive_remove(&current)?
@@ -155,7 +158,7 @@ fn cmd_remove(ids: &[String]) -> Result<()> {
         return Ok(());
     }
     let removed = models_list::remove_ids(&path, &to_remove)?;
-    println!("Removed {} model(s):", removed.len());
+    println!("Removed {} model(s) from {}:", removed.len(), path.display());
     for id in &removed {
         println!("  - {id}");
     }
@@ -269,12 +272,17 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     let ids: Option<Vec<String>> = if opts.all {
         None
     } else {
-        let ids = models_list::read_ids(&list_path())?;
-        if ids.is_empty() {
-            println!("models.txt is empty. Add models with `llm-leaders add`.");
-            return Ok(());
+        match models_list::find_models_path()? {
+            Some(path) => {
+                let list = models_list::read_ids(&path)?;
+                if list.is_empty() {
+                    None
+                } else {
+                    Some(list)
+                }
+            }
+            None => None,
         }
-        Some(ids)
     };
 
     let catalog = openrouter::fetch_models()?;
