@@ -19,6 +19,8 @@ z-ai/glm-5-turbo
 z-ai/glm-4.7
 moonshotai/kimi-k3
 moonshotai/kimi-k2.7-code
+deepseek/deepseek-v4-flash-0731
+deepseek/deepseek-v4-pro-0813
 deepseek/deepseek-v4-flash
 deepseek/deepseek-v4-pro
 xiaomi/mimo-v2.5

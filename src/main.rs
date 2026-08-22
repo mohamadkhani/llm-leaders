@@ -323,6 +323,8 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                         let synth = openrouter::Model {
                             id: id.clone(),
                             name: id.clone(),
+                            canonical_slug: None,
+                            description: None,
                             context_length: None,
                             pricing: openrouter::Pricing {
                                 prompt: "0".to_string(),

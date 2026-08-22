@@ -13,6 +13,11 @@ pub struct Model {
     pub id: String,
     pub name: String,
     #[serde(default)]
+    pub canonical_slug: Option<String>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    pub description: Option<String>,
+    #[serde(default)]
     #[allow(dead_code)]
     pub context_length: Option<u64>,
     pub pricing: Pricing,

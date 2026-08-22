@@ -19,6 +19,10 @@ pub struct Score {
     pub display_name: String,
     pub rating: f64,
     pub rank: u64,
+    #[serde(default)]
+    pub organization: Option<String>,
+    #[serde(default)]
+    pub model_url: Option<String>,
 }
 
 fn cache_path() -> Result<std::path::PathBuf> {
@@ -50,8 +54,25 @@ fn save(cache: &Cache) -> Result<()> {
     Ok(())
 }
 
+/// Helper struct to deserialize raw JSON objects from Arena's embedded payload.
+#[derive(Debug, Deserialize)]
+struct RawArenaEntry {
+    #[serde(rename = "modelKey", default)]
+    model_key: String,
+    #[serde(rename = "modelDisplayName", default)]
+    display_name: String,
+    #[serde(default)]
+    rating: f64,
+    #[serde(default)]
+    rank: u64,
+    #[serde(rename = "modelOrganization", default)]
+    organization: Option<String>,
+    #[serde(rename = "modelUrl", default)]
+    model_url: Option<String>,
+}
+
 /// Scrape the WebDev leaderboard by fetching the Next.js RSC payload
-/// embedded in the server-rendered HTML and regex-extracting score rows.
+/// embedded in the server-rendered HTML and deserializing full model objects.
 fn scrape() -> Result<Vec<Score>> {
     let resp = reqwest::blocking::Client::builder()
         .gzip(true)
@@ -63,34 +84,30 @@ fn scrape() -> Result<Vec<Score>> {
         .error_for_status()?
         .text()?;
 
-    // RSC payload escapes JSON with backslashes: \"modelKey\":\"x\",\"modelDisplayName\":\"y\",\"rating\":123.4
-    // Rank appears nearby as \"rank\":N. Capture each entry, then pair with its closest rank.
-    let row_re = Regex::new(
-        r#""modelKey\\":\\"([^\\]*)\\"[^}]*?"modelDisplayName\\":\\"([^\\]*)\\"[^}]*?"rating\\":([0-9.]+)"#,
-    )
-    .unwrap();
-    let rank_re = Regex::new(r#""rank\\":([0-9]+)"#).unwrap();
+    let obj_re = Regex::new(r#"\{[^{}]*\\"modelKey\\":\\"[^\\"]+\\"[^{}]*\}"#).unwrap();
 
     let mut out: Vec<Score> = Vec::new();
-    for caps in row_re.captures_iter(&resp) {
-        let pos = caps.get(0).unwrap().start();
-        // Find the nearest preceding rank token.
-        let rank = rank_re
-            .captures_iter(&resp[..pos])
-            .last()
-            .and_then(|c| c[1].parse::<u64>().ok())
-            .unwrap_or(0);
-        out.push(Score {
-            model_key: caps[1].to_string(),
-            display_name: caps[2].to_string(),
-            rating: caps[3].parse().unwrap_or(0.0),
-            rank,
-        });
+    for mat in obj_re.find_iter(&resp) {
+        let unescaped = mat.as_str().replace("\\\"", "\"").replace("\\\\", "\\");
+        if let Ok(raw) = serde_json::from_str::<RawArenaEntry>(&unescaped) {
+            if !raw.model_key.is_empty() && !raw.display_name.is_empty() && raw.rating > 0.0 {
+                out.push(Score {
+                    model_key: raw.model_key,
+                    display_name: raw.display_name,
+                    rating: raw.rating,
+                    rank: raw.rank,
+                    organization: raw.organization,
+                    model_url: raw.model_url,
+                });
+            }
+        }
     }
+
     if out.is_empty() {
         anyhow::bail!("arena scrape found 0 entries — page format may have changed");
     }
-    // Sort by rating desc so lookup prefers best when duplicates exist.
+
+    // Sort by rating desc
     out.sort_by(|a, b| b.rating.partial_cmp(&a.rating).unwrap_or(std::cmp::Ordering::Equal));
     Ok(out)
 }
