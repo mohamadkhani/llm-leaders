@@ -4,11 +4,16 @@ use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const WEBDEV_URL: &str = "https://arena.ai/leaderboard/code/webdev";
-const TTL: Duration = Duration::from_secs(24 * 60 * 60);
+// 5h, aligned with the benchmarks cache: both sides of the rank columns
+// move on the same cadence.
+const TTL: Duration = Duration::from_secs(5 * 60 * 60);
+/// Bump when the cache layout changes; a mismatch is a cache miss.
+const SCHEMA_VERSION: u32 = 2;
 
 /// On-disk cache shape for arena scores.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cache {
+    pub schema_version: u32,
     pub fetched_at: u64, // unix seconds
     pub entries: Vec<Score>,
 }
@@ -30,13 +35,19 @@ fn cache_path() -> Result<std::path::PathBuf> {
     Ok(base.join("llm-leaders").join("arena.json"))
 }
 
-/// Load valid (TTL-fresh) cache, else None.
+/// Load valid (TTL-fresh) cache, else None. A parse failure or schema
+/// mismatch is a miss (refetch), never a hard error.
 fn load_fresh() -> Result<Option<Cache>> {
     let path = cache_path()?;
     let Ok(content) = std::fs::read_to_string(&path) else {
         return Ok(None);
     };
-    let cache: Cache = serde_json::from_str(&content).context("parsing arena cache")?;
+    let Ok(cache) = serde_json::from_str::<Cache>(&content) else {
+        return Ok(None);
+    };
+    if cache.schema_version != SCHEMA_VERSION {
+        return Ok(None);
+    }
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
     if now.saturating_sub(cache.fetched_at) < TTL.as_secs() {
         Ok(Some(cache))
@@ -121,6 +132,10 @@ pub fn get_scores(refresh: bool) -> Result<Vec<Score>> {
     }
     let entries = scrape()?;
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-    save(&Cache { fetched_at: now, entries: entries.clone() })?;
+    save(&Cache {
+        schema_version: SCHEMA_VERSION,
+        fetched_at: now,
+        entries: entries.clone(),
+    })?;
     Ok(entries)
 }

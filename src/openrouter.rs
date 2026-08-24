@@ -48,6 +48,54 @@ pub struct BestPrice {
     /// Cheapest provider's display name.
     #[allow(dead_code)]
     pub provider: Option<String>,
+    /// When this entry was fetched (unix seconds). Per-entry, because a
+    /// partial refetch rewrites the whole file: a single file-level timestamp
+    /// would silently renew the entries it didn't touch.
+    #[serde(default)]
+    pub fetched_at: Option<u64>,
+}
+
+impl BestPrice {
+    /// Is this entry discounted? A discount is time-limited, so it shortens
+    /// the entry's usable life.
+    fn is_discounted(&self) -> bool {
+        self.discount.is_some_and(|d| d > 0.0)
+    }
+
+    /// Read the cache without TTL filtering — for the discount-diff that
+    /// decides which entries to invalidate. Returns the raw last-known
+    /// values, including expired ones: an expired entry is stale, not
+    /// "discount went away".
+    pub fn peek() -> Result<Option<std::collections::HashMap<String, BestPrice>>> {
+        let Ok(content) = std::fs::read_to_string(Self::cache_path()?) else {
+            return Ok(None);
+        };
+        let Ok(cache) = serde_json::from_str::<BestPriceCache>(&content) else {
+            return Ok(None);
+        };
+        if cache.schema_version != BEST_PRICE_SCHEMA {
+            return Ok(None);
+        }
+        Ok(Some(cache.prices))
+    }
+}
+
+/// 1h for a plain entry; 15min for a discounted one. A discount is
+/// time-limited, and when it lapses the price jumps with no other visible
+/// change — so a discounted row is the one we can least afford to serve
+/// stale.
+const TTL: u64 = 60 * 60;
+const DISCOUNT_TTL: u64 = 15 * 60;
+
+/// Is a cached entry still usable? Pure so the policy can be tested without
+/// touching the filesystem or the clock.
+///
+/// `file_stamp` is the whole-file timestamp, used only for entries written
+/// before per-entry stamps existed.
+fn entry_is_fresh(p: &BestPrice, file_stamp: u64, now: u64) -> bool {
+    let stamped = p.fetched_at.unwrap_or(file_stamp);
+    let ttl = if p.is_discounted() { DISCOUNT_TTL } else { TTL };
+    now.saturating_sub(stamped) < ttl
 }
 
 #[derive(Debug, Deserialize)]
@@ -72,9 +120,14 @@ struct Endpoint {
 /// On-disk cache shape for cheapest-provider prices.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BestPriceCache {
+    pub schema_version: u32,
     pub fetched_at: u64, // unix seconds
     pub prices: std::collections::HashMap<String, BestPrice>,
 }
+
+/// Bump when the cache layout changes; a mismatch is treated as a miss so a
+/// stale file from an older schema is never misread.
+const BEST_PRICE_SCHEMA: u32 = 2;
 
 impl BestPrice {
     fn cache_path() -> anyhow::Result<std::path::PathBuf> {
@@ -86,17 +139,23 @@ impl BestPrice {
         let Ok(content) = std::fs::read_to_string(Self::cache_path()?) else {
             return Ok(None);
         };
-        let cache: BestPriceCache =
-            serde_json::from_str(&content).context("parsing best-price cache")?;
+        // Old or corrupt cache: a miss, not an error — refetch rather than fail.
+        let Ok(cache) = serde_json::from_str::<BestPriceCache>(&content) else {
+            return Ok(None);
+        };
+        if cache.schema_version != BEST_PRICE_SCHEMA {
+            return Ok(None);
+        }
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs();
-        const TTL: u64 = 24 * 60 * 60;
-        if now.saturating_sub(cache.fetched_at) < TTL {
-            Ok(Some(cache.prices))
-        } else {
-            Ok(None)
-        }
+
+        // Expired entries are simply dropped, which sends them down the
+        // per-id refetch path in `fetch_best_prices`; their still-fresh
+        // neighbours keep serving from cache.
+        let mut prices = cache.prices;
+        prices.retain(|_, p| entry_is_fresh(p, cache.fetched_at, now));
+        Ok(Some(prices))
     }
 
     fn save(prices: &std::collections::HashMap<String, BestPrice>) -> anyhow::Result<()> {
@@ -108,6 +167,7 @@ impl BestPrice {
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs();
         let cache = BestPriceCache {
+            schema_version: BEST_PRICE_SCHEMA,
             fetched_at: now,
             prices: prices.clone(),
         };
@@ -118,18 +178,31 @@ impl BestPrice {
 
 /// For each given model id, fetch its provider endpoints and pick the
 /// cheapest (by input price — the OpenRouter website convention). Serves
-/// from a 24h on-disk cache first; missing ids are fetched in parallel and
+/// from a 1h on-disk cache first; missing ids are fetched in parallel and
 /// merged back into the cache. `refresh` bypasses the cache entirely.
+///
+/// `discount_changed` lists ids whose discount moved since their cached entry
+/// was written (detected via the 5-min frontend catalog by the caller): those
+/// entries are dropped so exactly those models re-fetch, even while their
+/// neighbours keep serving from cache. This is the targeted invalidation that
+/// keeps the `Disc` column intraday-accurate without re-running the fan-out
+/// every 5 minutes.
 pub fn fetch_best_prices(
     ids: &[String],
     refresh: bool,
+    discount_changed: &[String],
 ) -> Result<std::collections::HashMap<String, BestPrice>> {
     use std::collections::HashMap;
 
     let mut cached: HashMap<String, BestPrice> = if refresh {
         HashMap::new()
     } else {
-        BestPrice::load()?.unwrap_or_default()
+        let mut m = BestPrice::load()?.unwrap_or_default();
+        // Targeted invalidation: only the models whose discount actually moved.
+        for id in discount_changed {
+            m.remove(id);
+        }
+        m
     };
     let missing: Vec<String> = ids
         .iter()
@@ -142,9 +215,14 @@ pub fn fetch_best_prices(
             "fetching cheapest prices for {} model(s)...",
             missing.len()
         );
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_secs();
         let fetched = fetch_best_prices_uncached(&missing)?;
         for (id, bp) in &fetched {
-            cached.insert(id.clone(), bp.clone());
+            let mut bp = bp.clone();
+            bp.fetched_at = Some(now); // stamp so a partial refetch doesn't renew its neighbours
+            cached.insert(id.clone(), bp);
         }
         // Prune entries for models we'll never ask about again is overkill;
         // just persist the merged map.
@@ -213,6 +291,7 @@ fn fetch_best_prices_uncached(
                             output: price_per_m(&e.pricing.completion),
                             discount: e.pricing.discount,
                             provider: Some(e.name.clone()),
+                            fetched_at: None, // stamped by the caller on insert
                         },
                         None => BestPrice::default(),
                     };
@@ -262,4 +341,61 @@ pub fn fetch_models() -> Result<Vec<Model>> {
         .json()
         .context("parsing OpenRouter models JSON")?;
     Ok(resp.data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const HOUR: u64 = 60 * 60;
+    const NOW: u64 = 1_000_000;
+
+    fn entry(discount: Option<f64>, fetched_at: Option<u64>) -> BestPrice {
+        BestPrice {
+            input: Some(1.0),
+            output: Some(2.0),
+            discount,
+            provider: Some("p".into()),
+            fetched_at,
+        }
+    }
+
+    #[test]
+    fn plain_entry_lives_an_hour() {
+        let e = entry(None, Some(NOW - 59 * 60));
+        assert!(entry_is_fresh(&e, 0, NOW));
+        let e = entry(None, Some(NOW - HOUR));
+        assert!(!entry_is_fresh(&e, 0, NOW));
+    }
+
+    #[test]
+    fn discounted_entry_expires_in_fifteen_minutes() {
+        // Same age, opposite verdicts: the discount is what shortens the life.
+        let age = Some(NOW - 20 * 60);
+        assert!(entry_is_fresh(&entry(None, age), 0, NOW));
+        assert!(!entry_is_fresh(&entry(Some(0.35), age), 0, NOW));
+    }
+
+    #[test]
+    fn zero_discount_is_not_a_discount() {
+        // The API writes 0.0 rather than omitting the field; that must not
+        // cut the entry's TTL to 15 minutes.
+        let e = entry(Some(0.0), Some(NOW - 20 * 60));
+        assert!(entry_is_fresh(&e, 0, NOW));
+    }
+
+    #[test]
+    fn unstamped_entry_falls_back_to_file_timestamp() {
+        // Written before per-entry stamps existed: judged by the file's own.
+        let e = entry(None, None);
+        assert!(entry_is_fresh(&e, NOW - 10 * 60, NOW));
+        assert!(!entry_is_fresh(&e, NOW - 2 * HOUR, NOW));
+    }
+
+    #[test]
+    fn future_timestamp_does_not_expire_early() {
+        // Clock skew must not underflow into "infinitely stale".
+        let e = entry(Some(0.5), Some(NOW + HOUR));
+        assert!(entry_is_fresh(&e, 0, NOW));
+    }
 }

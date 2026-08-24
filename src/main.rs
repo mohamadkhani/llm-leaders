@@ -2,10 +2,7 @@ use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
 use comfy_table::{ContentArrangement, Table};
 
-mod arena;
-mod match_score;
-mod models_list;
-mod openrouter;
+use llm_leaders::{arena, matcher, models_list, openrouter, or_bench, or_catalog};
 
 #[derive(Parser)]
 #[command(name = "llm-leaders", about = "List coding LLMs: OpenRouter prices + arena WebDev rank")]
@@ -53,9 +50,10 @@ struct Cli {
     #[arg(long, global = true)]
     all: bool,
 
-    /// Force-refresh the arena score cache.
-    #[arg(long, global = true)]
-    refresh: bool,
+    /// Force-refresh caches: `prices` (catalog + endpoints), `ranks` (arena +
+    /// benchmarks), `all`. Bare `--refresh` means `all` (muscle memory).
+    #[arg(long, global = true, num_args = 0..=1, default_missing_value = "all", require_equals = false)]
+    refresh: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -102,10 +100,45 @@ fn main() -> Result<()> {
             discounted: cli.discounted,
             search: cli.search,
             all: cli.all,
-            refresh: cli.refresh,
+            refresh: cli
+                .refresh
+                .as_deref()
+                .unwrap_or("none")
+                .parse::<Refresh>()
+                .unwrap_or_else(|e| e.exit()),
         })?,
     }
     Ok(())
+}
+
+/// Which caches `--refresh` busts. Bare `--refresh` parses as `All` —
+/// muscle memory from the pre-values flag keeps working.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct Refresh {
+    prices: bool,
+    ranks: bool,
+}
+
+impl std::str::FromStr for Refresh {
+    type Err = clap::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use clap::error::ErrorKind;
+        let r = match s {
+            "all" => Refresh { prices: true, ranks: true },
+            "prices" => Refresh { prices: true, ranks: false },
+            "ranks" => Refresh { prices: false, ranks: true },
+            "none" => Refresh::default(),
+            other => {
+                return Err(clap::Error::raw(
+                    ErrorKind::InvalidValue,
+                    format!(
+                        "invalid --refresh {other:?} (use prices, ranks, or all)"
+                    ),
+                ))
+            }
+        };
+        Ok(r)
+    }
 }
 
 struct TableOpts {
@@ -118,7 +151,7 @@ struct TableOpts {
     discounted: bool,
     search: Option<String>,
     all: bool,
-    refresh: bool,
+    refresh: Refresh,
 }
 
 fn cmd_add(ids: &[String]) -> Result<()> {
@@ -286,72 +319,112 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     };
 
     let catalog = openrouter::fetch_models()?;
-    let scores = arena::get_scores(opts.refresh)?;
+    let scores = arena::get_scores(opts.refresh.ranks)?;
+    // Benchmark payload powers the matcher's oracle tier. It degrades to
+    // `None` on failure (one stderr warning), and matching falls back to
+    // structure alone — never a hard error.
+    let bench = or_bench::get(opts.refresh.ranks);
+    // Frontend catalog: the only source of permaslugs (dated ids, the join
+    // key the rankings use) and of a fresh per-model discount. Also degrades
+    // to `None` rather than failing the run.
+    let fcat = or_catalog::get(opts.refresh.prices);
 
     // Cheapest-provider prices (matches what the OpenRouter site shows),
-    // cached 24h on disk. In --all mode this covers the whole catalog; the
+    // cached 1h on disk. In --all mode this covers the whole catalog; the
     // first uncached --all run takes ~20s to fetch ~400 endpoints.
     let id_list: Vec<String> = match &ids {
         Some(list) => list.clone(),
         None => catalog.iter().map(|m| m.id.clone()).collect(),
     };
-    let best_prices = openrouter::fetch_best_prices(&id_list, opts.refresh)?;
-
-    let mut rows: Vec<Row> = Vec::new();
-    let build_row = |model: &openrouter::Model| {
-        let arena = match_score::score_for(model, &scores).map(|s| (s.rank, s.rating));
-        let (rank, elo) = arena
-            .map(|(rk, e)| (Some(rk), Some(e)))
-            .unwrap_or((None, None));
-        // Prefer cheapest-provider pricing when we have it; fall back to the
-        // catalog's default-endpoint price.
-        let best = best_prices.get(&model.id);
-        Row {
-            id: model.id.clone(),
-            name: model.name.clone(),
-            input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
-            output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
-            discount: best.and_then(|b| b.discount),
-            rank,
-            elo,
-        }
+    // Discount-triggered targeted invalidation: models whose catalog discount
+    // differs from what the price cache recorded get re-fetched, and only
+    // those — the intraday-accuracy mechanism that keeps the fan-out hourly.
+    let old_prices = openrouter::BestPrice::peek()?;
+    let discount_changed: Vec<String> = match (&fcat, &old_prices) {
+        (Some(fc), Some(old)) => id_list
+            .iter()
+            .filter(|id| {
+                let now_disc = fc.get(*id).and_then(|e| e.discount).unwrap_or(0.0);
+                let old_disc = old.get(*id).and_then(|p| p.discount).unwrap_or(0.0);
+                (now_disc - old_disc).abs() > f64::EPSILON
+            })
+            .cloned()
+            .collect(),
+        _ => Vec::new(),
     };
+    if !discount_changed.is_empty() {
+        eprintln!(
+            "discount changed for {} model(s), refreshing their prices...",
+            discount_changed.len()
+        );
+    }
+    let best_prices = openrouter::fetch_best_prices(&id_list, opts.refresh.prices, &discount_changed)?;
 
-    match &ids {
-        // Curated list: catalog models where possible; for ids missing from
-        // the catalog, synthesize a minimal Model so coding models that exist
-        // in arena but not in OpenRouter still get a rank/elo.
+    // The set of models to rank, in display order. For a curated `--models`
+    // list we synthesize a minimal Model for any id missing from the catalog,
+    // so coding models that exist in arena but not in OpenRouter still rank.
+    let mut models: Vec<openrouter::Model> = match &ids {
         Some(ids) => {
-            let by_id: std::collections::HashMap<String, &openrouter::Model> =
-                catalog.iter().map(|m| (m.id.clone(), m)).collect();
-            for id in ids {
-                match by_id.get(id) {
-                    Some(m) => rows.push(build_row(m)),
-                    None => {
-                        let synth = openrouter::Model {
-                            id: id.clone(),
-                            name: id.clone(),
-                            canonical_slug: None,
-                            description: None,
-                            context_length: None,
-                            pricing: openrouter::Pricing {
-                                prompt: "0".to_string(),
-                                completion: "0".to_string(),
-                                discount: None,
-                            },
-                        };
-                        rows.push(build_row(&synth));
-                    }
-                }
-            }
+            let by_id: std::collections::HashMap<&str, &openrouter::Model> =
+                catalog.iter().map(|m| (m.id.as_str(), m)).collect();
+            ids.iter()
+                .map(|id| match by_id.get(id.as_str()) {
+                    Some(m) => (*m).clone(),
+                    None => openrouter::Model {
+                        id: id.clone(),
+                        name: id.clone(),
+                        canonical_slug: None,
+                        description: None,
+                        context_length: None,
+                        pricing: openrouter::Pricing {
+                            prompt: "0".to_string(),
+                            completion: "0".to_string(),
+                            discount: None,
+                        },
+                    },
+                })
+                .collect()
         }
         // Full catalog: one row per OpenRouter model, stable catalog order.
-        None => {
-            for m in &catalog {
-                rows.push(build_row(m));
+        None => catalog.clone(),
+    };
+
+    // Enrich with permaslugs from the frontend catalog: the dated id is the
+    // join key the ranking endpoints use, so a model carrying one matches
+    // with strictly more precision (dates included).
+    if let Some(fc) = &fcat {
+        for m in models.iter_mut() {
+            if let Some(entry) = fc.get(&m.id) {
+                m.canonical_slug.get_or_insert_with(|| entry.permaslug.clone());
             }
         }
     }
+
+    // A single global one-to-one assignment: each arena row is claimed by at
+    // most one model, so duplicate ranks are structurally impossible.
+    let matches = matcher::resolve(&models, &scores, bench.as_ref());
+
+    let mut rows: Vec<Row> = models
+        .iter()
+        .map(|model| {
+            let (rank, elo) = matches
+                .get(&model.id)
+                .map(|m| (Some(m.score.rank), Some(m.score.rating)))
+                .unwrap_or((None, None));
+            // Prefer cheapest-provider pricing when we have it; fall back to
+            // the catalog's default-endpoint price.
+            let best = best_prices.get(&model.id);
+            Row {
+                id: model.id.clone(),
+                name: model.name.clone(),
+                input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
+                output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
+                discount: best.and_then(|b| b.discount),
+                rank,
+                elo,
+            }
+        })
+        .collect();
 
     // ---- Filters ---------------------------------------------------------
     let before = rows.len();
