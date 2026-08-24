@@ -67,6 +67,26 @@ struct Cli {
     #[arg(long, global = true)]
     min_score: Option<f64>,
 
+    /// Keep only models whose OR Web score is at least this (models without
+    /// an OR Web score are dropped).
+    #[arg(long, global = true)]
+    min_or_web: Option<f64>,
+
+    /// Keep only models whose Code score is at least this (models without
+    /// a Code score are dropped).
+    #[arg(long, global = true)]
+    min_code: Option<f64>,
+
+    /// Keep only models whose OR Web rank is at most this (1 = best). Models
+    /// without an OR Web score are dropped when this filter is set.
+    #[arg(long, global = true)]
+    max_or_web_rank: Option<u64>,
+
+    /// Keep only models whose Code rank is at most this (1 = best). Models
+    /// without a Code score are dropped when this filter is set.
+    #[arg(long, global = true)]
+    max_code_rank: Option<u64>,
+
     /// Show the full OpenRouter catalog instead of your curated models.txt list.
     #[arg(long, global = true)]
     all: bool,
@@ -128,6 +148,10 @@ fn main() -> Result<()> {
             bench: cli.bench,
             no_bench: cli.no_bench,
             min_score: cli.min_score,
+            min_or_web: cli.min_or_web,
+            min_code: cli.min_code,
+            max_or_web_rank: cli.max_or_web_rank,
+            max_code_rank: cli.max_code_rank,
             all: cli.all,
             refresh: cli
                 .refresh
@@ -182,6 +206,10 @@ struct TableOpts {
     bench: Option<String>,
     no_bench: bool,
     min_score: Option<f64>,
+    min_or_web: Option<f64>,
+    min_code: Option<f64>,
+    max_or_web_rank: Option<u64>,
+    max_code_rank: Option<u64>,
     all: bool,
     refresh: Refresh,
 }
@@ -586,6 +614,18 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     if let Some(min) = opts.min_score {
         let active = cols.active();
         rows.retain(|r| active(r).map_or(false, |s| s.score >= min));
+    }
+    if let Some(min) = opts.min_or_web {
+        rows.retain(|r| r.web.map_or(false, |s| s.score >= min));
+    }
+    if let Some(min) = opts.min_code {
+        rows.retain(|r| r.code.map_or(false, |s| s.score >= min));
+    }
+    if let Some(max) = opts.max_or_web_rank {
+        rows.retain(|r| r.web.map_or(false, |s| s.rank <= max));
+    }
+    if let Some(max) = opts.max_code_rank {
+        rows.retain(|r| r.code.map_or(false, |s| s.rank <= max));
     }
     let dropped = before - rows.len();
 

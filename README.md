@@ -60,6 +60,15 @@ llm-leaders --max-rank 20
 # (--bench's category when set, else OR Web; models without a score are dropped)
 llm-leaders --min-score 1300
 
+# keep only models scoring at least 1300 on OR Web / Code specifically
+llm-leaders --min-or-web 1300
+llm-leaders --min-code 1300
+
+# keep only models ranked in the OR Web / Code top 20 (models without a
+# score in that category are dropped when this filter is set)
+llm-leaders --max-or-web-rank 20
+llm-leaders --max-code-rank 20
+
 # keep only free models / only discounted models
 llm-leaders --free
 llm-leaders --discounted
