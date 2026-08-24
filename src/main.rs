@@ -15,7 +15,8 @@ struct Cli {
     markdown: bool,
 
     /// Sort column: rank (default, asc), elo (desc), input (input $/M asc),
-    /// output (output $/M asc), name (asc). "price" is an alias for "input".
+    /// output (output $/M asc), name (asc), or-web / code / bench (benchmark
+    /// score desc). "price" is an alias for "input".
     #[arg(long, global = true, default_value = "rank")]
     sort: String,
 
@@ -46,6 +47,26 @@ struct Cli {
     #[arg(long, global = true)]
     search: Option<String>,
 
+    /// Add a benchmark category as an extra column (see --list-bench). Short
+    /// form accepted: "uicomponent" resolves to "models-uicomponent".
+    #[arg(long, global = true)]
+    bench: Option<String>,
+
+    /// List all benchmark categories with model counts, then exit.
+    #[arg(long, global = true)]
+    list_bench: bool,
+
+    /// Drop the default benchmark columns (OR Web, Code), restoring the
+    /// 7-column layout.
+    #[arg(long, global = true)]
+    no_bench: bool,
+
+    /// Keep only models whose active benchmark score is at least this. The
+    /// active column is --bench's category if set, else OR Web. Models with
+    /// no score in that category are dropped.
+    #[arg(long, global = true)]
+    min_score: Option<f64>,
+
     /// Show the full OpenRouter catalog instead of your curated models.txt list.
     #[arg(long, global = true)]
     all: bool,
@@ -74,6 +95,11 @@ enum Command {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+    // --list-bench needs only the benchmarks cache; handled before any other
+    // network fetch.
+    if cli.list_bench {
+        return cmd_list_bench(cli.refresh.as_deref().unwrap_or("none").parse::<Refresh>().unwrap_or_else(|e| e.exit()).ranks);
+    }
     match cli.command {
         Some(Command::Add { ids }) => cmd_add(&ids)?,
         Some(Command::Remove { ids }) => cmd_remove(&ids)?,
@@ -99,6 +125,9 @@ fn main() -> Result<()> {
             free: cli.free,
             discounted: cli.discounted,
             search: cli.search,
+            bench: cli.bench,
+            no_bench: cli.no_bench,
+            min_score: cli.min_score,
             all: cli.all,
             refresh: cli
                 .refresh
@@ -150,8 +179,39 @@ struct TableOpts {
     free: bool,
     discounted: bool,
     search: Option<String>,
+    bench: Option<String>,
+    no_bench: bool,
+    min_score: Option<f64>,
     all: bool,
     refresh: Refresh,
+}
+
+/// Print all benchmark categories with model counts, then exit. With no
+/// benchmarks data (endpoint unreachable) prints a note instead of failing.
+fn cmd_list_bench(refresh_ranks: bool) -> Result<()> {
+    match or_bench::get(refresh_ranks) {
+        Some(b) => {
+            for (cat, count) in b.categories() {
+                println!("{cat}\t{count}");
+            }
+        }
+        None => println!("benchmarks unavailable (endpoint unreachable or cache unreadable)"),
+    }
+    Ok(())
+}
+
+/// Resolve a user-supplied --bench value to a full category name. Accepts the
+/// short form ("uicomponent" → "models-uicomponent") or the full name.
+fn resolve_bench_category(input: &str, bench: &or_bench::Benchmarks) -> Result<String> {
+    bench.resolve_category(input).ok_or_else(|| {
+        let mut cats: Vec<String> = bench.categories().into_iter().map(|(c, _)| c).collect();
+        cats.sort();
+        anyhow::anyhow!(
+            "unknown benchmark category {input:?}; use --list-bench to see all {} (e.g. {})",
+            cats.len(),
+            cats.first().map(String::as_str).unwrap_or("")
+        )
+    })
 }
 
 fn cmd_add(ids: &[String]) -> Result<()> {
@@ -299,6 +359,50 @@ struct Row {
     discount: Option<f64>,
     rank: Option<u64>,
     elo: Option<f64>,
+    // Benchmark standings, looked up by openrouter_id. Lookup is by the
+    // model's id directly — score tables are keyed by openrouter_id and tier
+    // variants (:free etc.) are simply absent, so they correctly show —.
+    web: Option<or_bench::Standing>,
+    code: Option<or_bench::Standing>,
+    extra: Option<or_bench::Standing>,
+}
+
+/// Which benchmark columns to render, with each category's total coverage for
+/// the header ("OR Web/150") — a #1 of 9 in a sparse category must not read
+/// as #1 of 150. `None` = column hidden.
+struct BenchCols {
+    web: Option<usize>,
+    code: Option<usize>,
+    extra: Option<(String, usize)>,
+}
+
+impl BenchCols {
+    /// The category driving --min-score and --sort bench: the --bench column
+    /// when set, else the OR Web column.
+    fn active(&self) -> fn(&Row) -> Option<or_bench::Standing> {
+        if self.extra.is_some() {
+            |r: &Row| r.extra
+        } else {
+            |r: &Row| r.web
+        }
+    }
+}
+
+/// Cell text for a benchmark standing: `1372 (#1)`, or `—`.
+fn fmt_bench(s: Option<or_bench::Standing>) -> String {
+    match s {
+        Some(s) => format!("{} (#{})", trim_score(s.score), s.rank),
+        None => "—".to_string(),
+    }
+}
+
+/// Benchmark scores are whole numbers; drop the trailing ".0".
+fn trim_score(v: f64) -> String {
+    if (v - v.round()).abs() < f64::EPSILON {
+        format!("{}", v.round() as i64)
+    } else {
+        format!("{v}")
+    }
 }
 
 fn render_table(opts: &TableOpts) -> Result<()> {
@@ -404,6 +508,26 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     // most one model, so duplicate ranks are structurally impossible.
     let matches = matcher::resolve(&models, &scores, bench.as_ref());
 
+    // Benchmark columns: two defaults (ADR-0003) plus an optional --bench
+    // extra. When the payload is unavailable everything degrades to — (one
+    // stderr warning already emitted by or_bench::get) — never a hard error.
+    let extra_cat = match (&bench, &opts.bench) {
+        (Some(b), Some(c)) => Some(resolve_bench_category(c, b)?),
+        (None, Some(_)) => {
+            eprintln!("warning: benchmarks unavailable, --bench column shows —");
+            None
+        }
+        _ => None,
+    };
+    let cols = BenchCols {
+        web: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_WEBSITE))),
+        code: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_CODE))),
+        extra: extra_cat.clone().map(|c| {
+            let n = bench.as_ref().map_or(0, |b| b.coverage(&c));
+            (c, n)
+        }),
+    };
+
     let mut rows: Vec<Row> = models
         .iter()
         .map(|model| {
@@ -411,6 +535,9 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .get(&model.id)
                 .map(|m| (Some(m.score.rank), Some(m.score.rating)))
                 .unwrap_or((None, None));
+            let standing = |cat: &Option<String>| -> Option<or_bench::Standing> {
+                bench.as_ref()?.standing(cat.as_deref()?, &model.id)
+            };
             // Prefer cheapest-provider pricing when we have it; fall back to
             // the catalog's default-endpoint price.
             let best = best_prices.get(&model.id);
@@ -422,6 +549,9 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 discount: best.and_then(|b| b.discount),
                 rank,
                 elo,
+                web: bench.as_ref().and_then(|b| b.standing(or_bench::CAT_WEBSITE, &model.id)),
+                code: bench.as_ref().and_then(|b| b.standing(or_bench::CAT_CODE, &model.id)),
+                extra: standing(&extra_cat),
             }
         })
         .collect();
@@ -453,9 +583,22 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             words.iter().all(|w| fuzzy_contains(&hay, w))
         });
     }
+    if let Some(min) = opts.min_score {
+        let active = cols.active();
+        rows.retain(|r| active(r).map_or(false, |s| s.score >= min));
+    }
     let dropped = before - rows.len();
 
-    // ---- Sort ------------------------------------------------------------
+    // Benchmark sorts: desc, higher score is better, missing last. The three
+    // keys pick the column; `bench` follows the active column (--bench's
+    // category when set, else OR Web).
+    fn bench_score(rows: &mut Vec<Row>, get: &dyn Fn(&Row) -> Option<or_bench::Standing>) {
+        rows.sort_by(|a, b| {
+            let sa = get(a).map_or(f64::MIN, |s| s.score);
+            let sb = get(b).map_or(f64::MIN, |s| s.score);
+            sb.partial_cmp(&sa).unwrap_or(std::cmp::Ordering::Equal)
+        });
+    }
     // rank: asc, missing last. elo: desc, missing last.
     // price: input asc, missing last. output: output asc, missing last.
     // name: asc.
@@ -492,13 +635,16 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .unwrap_or(std::cmp::Ordering::Equal)
         }),
         "name" => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        other => bail!("invalid --sort {other:?} (use rank|elo|input|output|name)"),
+        "or-web" => bench_score(&mut rows, &|r| r.web),
+        "code" => bench_score(&mut rows, &|r| r.code),
+        "bench" => bench_score(&mut rows, &cols.active()),
+        other => bail!("invalid --sort {other:?} (use rank|elo|input|output|name|or-web|code|bench)"),
     }
 
     if opts.markdown {
-        print_markdown(&rows);
+        print_markdown(&rows, &cols);
     } else {
-        print_table(&rows);
+        print_table(&rows, &cols);
     }
     if dropped > 0 {
         eprintln!("({dropped} model(s) hidden by filters)");
@@ -604,6 +750,17 @@ fn elo_heat(elo: Option<f64>, min: f64, max: f64) -> comfy_table::Color {
     heat_rgb(t)
 }
 
+/// Benchmark-score heat: highest score in view = green, lowest = red. Same
+/// ramp as Elo, scaled over the rows actually displayed.
+fn score_heat(score: Option<f64>, min: f64, max: f64) -> comfy_table::Color {
+    let s = match score {
+        Some(s) if max > min => s,
+        _ => return comfy_table::Color::Reset,
+    };
+    let t = 1.0 - ((s - min) / (max - min)).clamp(0.0, 1.0);
+    heat_rgb(t)
+}
+
 /// Value-for-money heat for the model name: how much arena quality a model
 /// delivers per dollar, relative to the rows actually displayed. Best value
 /// in view = green, worst = red. Free models (price 0) get an even deeper
@@ -653,22 +810,32 @@ fn styled_cell(text: String, color: comfy_table::Color, bold: bool) -> comfy_tab
     cell
 }
 
-fn print_table(rows: &[Row]) {
+fn print_table(rows: &[Row], cols: &BenchCols) {
     use comfy_table::presets::UTF8_FULL_CONDENSED;
     let mut t = Table::new();
     t.load_preset(UTF8_FULL_CONDENSED)
         .set_content_arrangement(ContentArrangement::Disabled)
         // Emit ANSI styles even when stdout isn't a TTY (e.g. piped to less -R).
         .enforce_styling();
-    t.set_header(vec![
+    let mut header = vec![
         styled_cell("Arena #".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Model".to_string(), comfy_table::Color::Reset, true),
         styled_cell("In $/M".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Out $/M".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Disc".to_string(), comfy_table::Color::Reset, true),
         styled_cell("Elo".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("ID".to_string(), comfy_table::Color::Reset, true),
-    ]);
+    ];
+    if let Some(n) = cols.web {
+        header.push(styled_cell(format!("OR Web/{n}"), comfy_table::Color::Reset, true));
+    }
+    if let Some(n) = cols.code {
+        header.push(styled_cell(format!("Code/{n}"), comfy_table::Color::Reset, true));
+    }
+    if let Some((cat, n)) = &cols.extra {
+        header.push(styled_cell(format!("{cat}/{n}"), comfy_table::Color::Reset, true));
+    }
+    header.push(styled_cell("ID".to_string(), comfy_table::Color::Reset, true));
+    t.set_header(header);
     // Price-heat scale over the visible rows (after filtering).
     let inputs: Vec<f64> = rows.iter().filter_map(|r| r.input).collect();
     let outputs: Vec<f64> = rows.iter().filter_map(|r| r.output).collect();
@@ -692,6 +859,18 @@ fn print_table(rows: &[Row]) {
         elos.iter().cloned().fold(f64::INFINITY, f64::min),
         elos.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
     );
+    // Benchmark-score heat: one scale per column, over the visible scores.
+    // Higher = greener, same ramp as Elo.
+    let score_scale = |get: &dyn Fn(&Row) -> Option<or_bench::Standing>| {
+        let vals: Vec<f64> = rows.iter().filter_map(|r| get(r).map(|s| s.score)).collect();
+        (
+            vals.iter().cloned().fold(f64::INFINITY, f64::min),
+            vals.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+        )
+    };
+    let (web_min, web_max) = score_scale(&|r: &Row| r.web);
+    let (code_min, code_max) = score_scale(&|r: &Row| r.code);
+    let (extra_min, extra_max) = score_scale(&|r: &Row| r.extra);
     // Value-for-money scale over the visible rows. Blended price weights
     // input 3 : output 1 (typical coding-agent traffic); value = elo-odds /
     // price where odds = 10^(elo/400). Free models are excluded.
@@ -715,7 +894,7 @@ fn print_table(rows: &[Row]) {
     );
     for r in rows {
         let (val_color, val_bold) = value_heat(r.elo, r.input, r.output, val_min, val_max);
-        t.add_row(vec![
+        let mut cells = vec![
             styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false),
             styled_cell(r.name.clone(), val_color, val_bold),
             styled_cell(
@@ -738,8 +917,30 @@ fn print_table(rows: &[Row]) {
                 r.discount.map_or(false, |d| d >= 0.30),
             ),
             styled_cell(fmt_elo(r.elo), elo_heat(r.elo, elo_min, elo_max), false),
-            styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false),
-        ]);
+        ];
+        if cols.web.is_some() {
+            cells.push(styled_cell(
+                fmt_bench(r.web),
+                score_heat(r.web.map(|s| s.score), web_min, web_max),
+                false,
+            ));
+        }
+        if cols.code.is_some() {
+            cells.push(styled_cell(
+                fmt_bench(r.code),
+                score_heat(r.code.map(|s| s.score), code_min, code_max),
+                false,
+            ));
+        }
+        if cols.extra.is_some() {
+            cells.push(styled_cell(
+                fmt_bench(r.extra),
+                score_heat(r.extra.map(|s| s.score), extra_min, extra_max),
+                false,
+            ));
+        }
+        cells.push(styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false));
+        t.add_row(cells);
     }
     // Color the table frame. comfy-table resets styling after each cell
     // (\x1b[0m), which would also wipe a surrounding frame color, and its
@@ -776,19 +977,45 @@ fn color_borders(table: &str, color: &str, reset: &str) -> String {
     out
 }
 
-fn print_markdown(rows: &[Row]) {
-    println!("| Arena # | Model | In $/M | Out $/M | Disc | Elo | ID |");
-    println!("|---:|---|---:|---:|---:|---:|---|");
+fn print_markdown(rows: &[Row], cols: &BenchCols) {
+    let mut head = String::from("| Arena # | Model | In $/M | Out $/M | Disc | Elo |");
+    let mut sep = String::from("|---:|---|---:|---:|---:|---:|");
+    if let Some(n) = cols.web {
+        head.push_str(&format!(" OR Web/{n} |"));
+        sep.push_str("---:|");
+    }
+    if let Some(n) = cols.code {
+        head.push_str(&format!(" Code/{n} |"));
+        sep.push_str("---:|");
+    }
+    if let Some((cat, n)) = &cols.extra {
+        head.push_str(&format!(" {cat}/{n} |"));
+        sep.push_str("---:|");
+    }
+    head.push_str(" ID |");
+    sep.push_str("---|");
+    println!("{head}");
+    println!("{sep}");
     for r in rows {
-        println!(
-            "| {} | {} | {} | {} | {} | {} | `{}` |",
+        let mut body = format!(
+            "| {} | {} | {} | {} | {} | {} |",
             fmt_rank(r.rank),
             r.name,
             fmt_price(r.input),
             fmt_price(r.output),
             fmt_discount(r.discount),
             fmt_elo(r.elo),
-            r.id
         );
+        if cols.web.is_some() {
+            body.push_str(&format!(" {} |", fmt_bench(r.web)));
+        }
+        if cols.code.is_some() {
+            body.push_str(&format!(" {} |", fmt_bench(r.code)));
+        }
+        if cols.extra.is_some() {
+            body.push_str(&format!(" {} |", fmt_bench(r.extra)));
+        }
+        body.push_str(&format!(" `{}` |", r.id));
+        println!("{body}");
     }
 }

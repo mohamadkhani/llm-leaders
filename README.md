@@ -2,23 +2,27 @@
 
 A CLI that lists coding LLMs with their **OpenRouter prices** and **arena.ai WebDev Elo** score, side by side.
 
-Example — `llm-leaders --all --max-input 1.5 --max-rank 50` (cheapest-input price ≤ $1.50/M, arena rank ≤ 50, across the full OpenRouter catalog):
+Example — `llm-leaders --all --max-input 2 --max-rank 50` (cheapest-input price ≤ $1.50/M, arena rank ≤ 50, across the full OpenRouter catalog):
 
 ![llm-leaders --all --max-input 1.5 --max-rank 50](assets/example.png)
 
 ## Columns
 
-| Arena # | Model | In $/M | Out $/M | Disc | Elo | ID |
-| ---: | --- | ---: | ---: | ---: | ---: | --- |
-| arena.ai WebDev rank (#1 best) | OpenRouter model name | input price per million tokens | output price per million tokens | provider discount | arena Elo | OpenRouter model ID (copy-paste to use the model) |
+| Arena # | Model | In $/M | Out $/M | Disc | Elo | OR Web | Code | ID |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| arena.ai WebDev rank (#1 best) | OpenRouter model name | input price per million tokens | output price per million tokens | provider discount | arena Elo | OpenRouter website-building benchmark, `score (#rank)` | OpenRouter coding benchmark, `score (#rank)` | OpenRouter model ID (copy-paste to use the model) |
 
-Prices come live from the [OpenRouter model catalog](https://openrouter.ai/api/v1/models), then refined per model with the cheapest provider from the [endpoints API](https://openrouter.ai/api/v1/models) — the same "lowest across providers" price the OpenRouter website shows. Cheapest prices are cached for 24h at `~/.config/llm-leaders/best_prices.json`; the first `--all` run takes ~20s to fetch all providers, subsequent runs are instant. `--refresh` bypasses the cache.
-Ranks come from the [arena.ai WebDev leaderboard](https://arena.ai/leaderboard/code/webdev), scraped from the page's embedded payload and cached for 24h at `~/.config/llm-leaders/arena.json`.
+Prices come live from the [OpenRouter model catalog](https://openrouter.ai/api/v1/models), then refined per model with the cheapest provider from the [endpoints API](https://openrouter.ai/api/v1/models) — the same "lowest across providers" price the OpenRouter website shows. Cheapest prices are cached for 1h at `~/.config/llm-leaders/best_prices.json`; the first `--all` run takes ~20s to fetch all providers, subsequent runs are instant.
+Ranks come from the [arena.ai WebDev leaderboard](https://arena.ai/leaderboard/code/webdev), scraped from the page's embedded payload and cached for 5h at `~/.config/llm-leaders/arena.json`.
+Benchmark columns (OR Web = `models-website`, Code = `models-codecategories`) come from OpenRouter's frontend benchmarks endpoint, keyed by OpenRouter model ID — only canonical models are benchmarked, so tier variants (`:free` etc.) show `—`. Cached for 5h at `~/.config/llm-leaders/benchmarks.json`. The header shows each category's coverage (`OR Web/127`) — a `#1` in a sparse category is not a `#1` of 127. Note the scales differ on purpose: arena ranks a *configuration* (e.g. kimi-k3-max), the benchmarks score the *base model* — the columns sit side by side so the mismatch stays visible.
+
+Cache TTLs at a glance: prices 5-min catalog / 1h endpoints (15-min discount check), arena 5h, benchmarks 5h. `--refresh` busts caches selectively.
 
 The terminal table uses heat scales, all computed over the rows actually displayed so they stay meaningful under any filter combination:
 
 - **Model** — value-for-money heat: Elo odds (`10^(Elo/400)` — each +400 Elo counts as 10× quality) per dollar of blended price (input weighted 3 : output 1, log-scaled). Green = best quality-per-dollar in view, red = worst. Free models with a known Elo render **bold pure green** — unbeatable per dollar.
 - **Arena # / Elo** — green = best rank / highest Elo in view, scaling through yellow to red = worst.
+- **OR Web / Code / bench columns** — green = highest score in view, same ramp as Elo.
 - **In $/M / Out $/M** — green = cheapest in view, scaling through yellow to red = priciest.
 
 Columns with no spread (e.g. a single-row result) are left uncolored.
@@ -32,11 +36,14 @@ llm-leaders
 # markdown table for pasting into docs/PRs
 llm-leaders --markdown
 
-# sort by arena elo (desc), input price (asc), output price (asc), or name (asc)
+# sort by arena elo (desc), input price (asc), output price (asc), name (asc),
+# or a benchmark score (desc): or-web, code, or bench (the --bench column
+# when set, else OR Web)
 llm-leaders --sort elo
 llm-leaders --sort input
 llm-leaders --sort output
 llm-leaders --sort name
+llm-leaders --sort or-web
 
 # keep only models cheaper than $1/M input (free models always pass;
 # models with no known price are dropped)
@@ -48,6 +55,10 @@ llm-leaders --max-output 1
 # keep only models ranked in the arena top 20 (models with no arena score
 # are dropped when this filter is set)
 llm-leaders --max-rank 20
+
+# keep only models scoring at least 1300 on the active benchmark column
+# (--bench's category when set, else OR Web; models without a score are dropped)
+llm-leaders --min-score 1300
 
 # keep only free models / only discounted models
 llm-leaders --free
@@ -65,7 +76,21 @@ llm-leaders --all --max-rank 10 --max-input 1
 # combine filters
 llm-leaders --max-input 1 --max-rank 20
 
-# force-refresh the arena cache
+# benchmark columns: add any of the 27 categories as an extra column
+# (short form accepted — "uicomponent" resolves to "models-uicomponent")
+llm-leaders --bench agents-fullstack
+llm-leaders --bench uicomponent
+
+# list all 27 benchmark categories with model counts
+llm-leaders --list-bench
+
+# drop the default benchmark columns (OR Web, Code) for the 7-column layout
+llm-leaders --no-bench
+
+# force-refresh caches: prices (catalog + endpoints), ranks (arena +
+# benchmarks), or all. Bare --refresh means all.
+llm-leaders --refresh prices
+llm-leaders --refresh ranks
 llm-leaders --refresh
 
 # manage the curated model list

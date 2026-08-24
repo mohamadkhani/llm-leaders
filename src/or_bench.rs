@@ -68,6 +68,16 @@ impl Benchmarks {
         self.scores.get(category)?.get(openrouter_id).copied()
     }
 
+    /// Resolve a user-supplied `--bench` value to a full category name: the
+    /// exact name, or its short form (`uicomponent` → `models-uicomponent`).
+    pub fn resolve_category(&self, input: &str) -> Option<String> {
+        if self.scores.contains_key(input) {
+            return Some(input.to_string());
+        }
+        let short = format!("models-{input}");
+        self.scores.contains_key(&short).then_some(short)
+    }
+
     /// How many models a category covers — shown in the column header so
     /// `#1 of 9` isn't misread as `#1 of 150`.
     pub fn coverage(&self, category: &str) -> usize {
@@ -328,5 +338,41 @@ mod tests {
             assert_eq!(b.coverage(&cat), count);
             assert!(count > 0);
         }
+    }
+
+    /// The column lookups the renderer performs: by openrouter_id, directly.
+    /// Tier variants (`:free`) are absent from score tables by design.
+    #[test]
+    fn standings_for_default_columns() {
+        let b = fixture();
+        // A canonical model must have standings wherever the category covers
+        // it; find one covered by both default categories.
+        let mut checked = 0;
+        for id in b.scores.get(CAT_WEBSITE).expect("website table present").keys() {
+            if let Some(s) = b.standing(CAT_WEBSITE, id) {
+                assert!(s.rank >= 1);
+                checked += 1;
+            }
+            if checked >= 5 {
+                break;
+            }
+        }
+        assert!(checked > 0, "fixture has covered models in models-website");
+        // A variant id is not benchmarked: standing is None, not an error.
+        assert!(b.standing(CAT_WEBSITE, "z-ai/glm-5.2:free").is_none());
+    }
+
+    /// --bench short form: `uicomponent` resolves to `models-uicomponent`,
+    /// full names pass through, unknown inputs return None.
+    #[test]
+    fn resolve_category_short_form() {
+        let b = fixture();
+        assert_eq!(b.resolve_category(CAT_WEBSITE), Some(CAT_WEBSITE.to_string()));
+        assert_eq!(
+            b.resolve_category("uicomponent"),
+            Some("models-uicomponent".to_string())
+        );
+        assert!(b.resolve_category("models-uicomponent").is_some());
+        assert_eq!(b.resolve_category("no-such-category"), None);
     }
 }
