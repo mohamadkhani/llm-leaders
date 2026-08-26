@@ -27,7 +27,7 @@ pub const CAT_WEBSITE: &str = "models-website";
 pub const CAT_CODE: &str = "models-codecategories";
 
 /// One model's standing in one benchmark category.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Standing {
     pub score: f64,
     /// 1-based rank within this category only.
@@ -65,7 +65,19 @@ impl Benchmarks {
 
     /// A model's standing in one category.
     pub fn standing(&self, category: &str, openrouter_id: &str) -> Option<Standing> {
-        self.scores.get(category)?.get(openrouter_id).copied()
+        if let Some(s) = self.scores.get(category)?.get(openrouter_id) {
+            return Some(*s);
+        }
+        // Tier variants (`:free`, `:batch`) are never benchmarked separately:
+        // they are the same model as their canonical twin, which carries the
+        // family's scores.
+        let (base, tier) = openrouter_id.split_once(':')?;
+        matches!(tier, "free" | "batch").then(|| {
+            self.scores
+                .get(category)?
+                .get(base)
+                .copied()
+        })?
     }
 
     /// Resolve a user-supplied `--bench` value to a full category name: the
@@ -358,8 +370,16 @@ mod tests {
             }
         }
         assert!(checked > 0, "fixture has covered models in models-website");
-        // A variant id is not benchmarked: standing is None, not an error.
-        assert!(b.standing(CAT_WEBSITE, "z-ai/glm-5.2:free").is_none());
+        // A variant id is never benchmarked separately — but it inherits its
+        // canonical twin's standing. Unknown-tier suffixes still return None.
+        if let Some(base) = b.standing(CAT_WEBSITE, "z-ai/glm-5.2") {
+            assert_eq!(b.standing(CAT_WEBSITE, "z-ai/glm-5.2:free"), Some(base));
+            assert_eq!(b.standing(CAT_WEBSITE, "z-ai/glm-5.2:batch"), Some(base));
+        }
+        assert!(
+            b.scores.get(CAT_WEBSITE).map_or(false, |t| !t.contains_key("z-ai/glm-5.2:free")),
+            "variant ids must not appear in score tables directly"
+        );
     }
 
     /// --bench short form: `uicomponent` resolves to `models-uicomponent`,

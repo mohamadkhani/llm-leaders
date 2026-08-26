@@ -196,13 +196,19 @@ pub fn resolve<'a>(
         }
         used_models.insert(c.model_idx);
         used_scores.insert(c.score_idx);
-        out.insert(
-            models[c.model_idx].id.clone(),
-            Match {
-                score: &scores[c.score_idx],
-                provenance: c.provenance,
-            },
-        );
+        let m = Match {
+            score: &scores[c.score_idx],
+            provenance: c.provenance,
+        };
+        out.insert(models[c.model_idx].id.clone(), m.clone());
+        // A tier variant (`:free`) is the same model as its canonical twin,
+        // so the whole family inherits the pairing — otherwise the variant
+        // row would render its rank as `—` despite sharing the score.
+        for (vi, ci) in canonical_of.iter().enumerate() {
+            if *ci == c.model_idx && vi != c.model_idx {
+                out.insert(models[vi].id.clone(), m.clone());
+            }
+        }
     }
 
     out

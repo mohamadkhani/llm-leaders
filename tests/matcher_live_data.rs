@@ -79,13 +79,16 @@ fn acceptance_table_on_live_fixtures() {
     assert_eq!(rank_of("moonshotai/kimi-k2.7-code"), Some(41));
     assert_eq!(provenance_of("moonshotai/kimi-k2.7-code"), Some(Provenance::Oracle));
 
-    // Tier siblings share the permaslug but never the arena row.
-    assert_eq!(rank_of("z-ai/glm-5.2:free"), None);
-    assert_eq!(rank_of("z-ai/glm-5.2:batch"), None);
+    // Tier siblings are the same model as their canonical twin: they inherit
+    // its pairing rather than claiming a row of their own.
+    let base_rank = rank_of("z-ai/glm-5.2");
+    assert_eq!(rank_of("z-ai/glm-5.2:free"), base_rank);
+    assert_eq!(rank_of("z-ai/glm-5.2:batch"), base_rank);
 }
 
-/// THE property check: no arena rank is claimed by more than one canonical
-/// model. This alone would have caught all 24 collisions on old HEAD.
+/// THE property check: no arena row is claimed by more than one model
+/// family. Tier variants (`:free`) deliberately share their canonical
+/// twin's pairing, so they are excluded before counting.
 #[test]
 fn no_arena_rank_is_claimed_twice() {
     let models = catalog();
@@ -93,13 +96,29 @@ fn no_arena_rank_is_claimed_twice() {
     let b = bench();
     let got = resolve(&models, &scores, Some(&b));
 
-    let mut seen: HashSet<u64> = HashSet::new();
-    for m in got.values() {
+    let mut seen: HashSet<usize> = HashSet::new();
+    for (id, m) in &got {
+        if id.contains(":free") || id.contains(":batch") {
+            continue; // inherits its canonical twin's pairing by design
+        }
         assert!(
-            seen.insert(m.score.rank),
-            "rank #{} claimed twice",
-            m.score.rank
+            seen.insert(m.score as *const Score as usize),
+            "row #{}/{} claimed twice",
+            m.score.rank,
+            m.score.model_key,
         );
+    }
+    // And every variant that did get an entry agrees with its base.
+    for (id, m) in &got {
+        if let Some(base) = id.split(':').next() {
+            if id != base {
+                assert_eq!(
+                    got.get(base).map(|b| b.score as *const Score as usize),
+                    Some(m.score as *const Score as usize),
+                    "{id} disagrees with its canonical twin {base}"
+                );
+            }
+        }
     }
 }
 
@@ -118,8 +137,15 @@ fn structural_only_when_oracle_unavailable() {
     );
     assert!(got.get("z-ai/glm-4.5v").is_none());
 
-    let mut seen: HashSet<u64> = HashSet::new();
-    for m in got.values() {
-        assert!(seen.insert(m.score.rank), "rank #{} claimed twice (no-oracle path)", m.score.rank);
+    let mut seen: HashSet<usize> = HashSet::new();
+    for (id, m) in &got {
+        if id.contains(":free") || id.contains(":batch") {
+            continue;
+        }
+        assert!(
+            seen.insert(m.score as *const Score as usize),
+            "row #{} claimed twice (no-oracle path)",
+            m.score.rank
+        );
     }
 }

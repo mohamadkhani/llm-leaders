@@ -714,9 +714,12 @@ fn fmt_elo(r: Option<f64>) -> String {
     }
 }
 
-fn fmt_discount(d: Option<f64>) -> String {
-    match d {
-        Some(f) if f > 0.0 => format!("-{}%", (f * 100.0).round() as u64),
+fn fmt_discount(d: Option<f64>, input: Option<f64>) -> String {
+    match (d, input) {
+        // Free is a price of $0, not a promo — say "free", keep the
+        // discount field itself clean for filters and sorts.
+        (_, Some(p)) if p <= 0.0 => "free".to_string(),
+        (Some(f), _) if f > 0.0 => format!("-{}%", (f * 100.0).round() as u64),
         _ => "—".to_string(),
     }
 }
@@ -934,27 +937,43 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     );
     for r in rows {
         let (val_color, val_bold) = value_heat(r.elo, r.input, r.output, val_min, val_max);
+        // Free prices ($0) get bold pure green — unbeatable per dollar,
+        // same treatment as the free discount label. Paid rows keep the
+        // red→green heat scale.
+        let price_style = |p: Option<f64>| -> (comfy_table::Color, bool) {
+            if p.map_or(false, |v| v <= 0.0) {
+                (comfy_table::Color::Rgb { r: 0, g: 255, b: 0 }, true)
+            } else {
+                (
+                    price_heat(p, in_min, in_max).unwrap_or(comfy_table::Color::Reset),
+                    false,
+                )
+            }
+        };
         let mut cells = vec![
             styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false),
             styled_cell(r.name.clone(), val_color, val_bold),
+            {
+                let (c, b) = price_style(r.input);
+                styled_cell(fmt_price(r.input), c, b)
+            },
+            {
+                let (c, b) = price_style(r.output);
+                styled_cell(fmt_price(r.output), c, b)
+            },
             styled_cell(
-                fmt_price(r.input),
-                price_heat(r.input, in_min, in_max).unwrap_or(comfy_table::Color::Reset),
-                false,
-            ),
-            styled_cell(
-                fmt_price(r.output),
-                price_heat(r.output, out_min, out_max).unwrap_or(comfy_table::Color::Reset),
-                false,
-            ),
-            styled_cell(
-                fmt_discount(r.discount),
-                if r.discount.map_or(false, |d| d > 0.0) {
+                fmt_discount(r.discount, r.input),
+                // Free rows: bold pure green — same treatment as the free
+                // price cells. Real promos: plain green.
+                if r.input.map_or(false, |p| p <= 0.0) {
+                    comfy_table::Color::Rgb { r: 0, g: 255, b: 0 }
+                } else if r.discount.map_or(false, |d| d > 0.0) {
                     comfy_table::Color::Green
                 } else {
                     comfy_table::Color::Reset
                 },
-                r.discount.map_or(false, |d| d >= 0.30),
+                r.input.map_or(false, |p| p <= 0.0)
+                    || r.discount.map_or(false, |d| d >= 0.30),
             ),
             styled_cell(fmt_elo(r.elo), elo_heat(r.elo, elo_min, elo_max), false),
         ];
@@ -1043,7 +1062,7 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
             r.name,
             fmt_price(r.input),
             fmt_price(r.output),
-            fmt_discount(r.discount),
+            fmt_discount(r.discount, r.input),
             fmt_elo(r.elo),
         );
         if cols.web.is_some() {
