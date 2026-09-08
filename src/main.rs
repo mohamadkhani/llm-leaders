@@ -14,10 +14,10 @@ struct Cli {
     #[arg(long, global = true)]
     markdown: bool,
 
-    /// Sort column: code-rank (default, asc), rank (arena rank, asc),
-    /// elo (desc), input (input $/M asc), output (output $/M asc),
-    /// name (asc), or or-web / code / bench (benchmark score desc).
-    /// "price" is an alias for "input".
+    /// Sort column: code-rank (default, asc), arena-rank (asc), elo (desc),
+    /// input (input $/M asc), output (output $/M asc), name (asc), or
+    /// web-score / code-score / bench (benchmark score desc). "price" is an
+    /// alias for "input"; old keys rank, or-web, code still work.
     #[arg(long, global = true, default_value = "code-rank")]
     sort: String,
 
@@ -665,7 +665,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     }
     // rank: asc, missing last. elo: desc, missing last.
     // price: input asc, missing last. output: output asc, missing last.
-    // name: asc.
+    // name: asc. Old keys (rank, or-web, code) kept as aliases.
     match opts.sort.as_str() {
         // Code rank: asc, missing last — the primary default sort.
         "code-rank" => rows.sort_by(|a, b| {
@@ -673,7 +673,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .map_or(u64::MAX, |s| s.rank)
                 .cmp(&b.code.map_or(u64::MAX, |s| s.rank))
         }),
-        "rank" => rows.sort_by(|a, b| {
+        "arena-rank" | "rank" => rows.sort_by(|a, b| {
             a.rank
                 .unwrap_or(u64::MAX)
                 .cmp(&b.rank.unwrap_or(u64::MAX))
@@ -705,10 +705,10 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .unwrap_or(std::cmp::Ordering::Equal)
         }),
         "name" => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        "or-web" => bench_score(&mut rows, &|r| r.web),
-        "code" => bench_score(&mut rows, &|r| r.code),
+        "web-score" | "or-web" => bench_score(&mut rows, &|r| r.web),
+        "code-score" | "code" => bench_score(&mut rows, &|r| r.code),
         "bench" => bench_score(&mut rows, &cols.active()),
-        other => bail!("invalid --sort {other:?} (use code-rank|rank|elo|input|output|name|or-web|code|bench)"),
+        other => bail!("invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|web-score|code-score|bench)"),
     }
 
     if opts.markdown {

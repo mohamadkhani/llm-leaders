@@ -38,14 +38,14 @@ llm-leaders
 llm-leaders --markdown
 
 # sort by arena rank (asc), arena elo (desc), input price (asc), output price
-# (asc), name (asc), or a benchmark score (desc): or-web, code, or bench (the
-# --bench column when set, else OR Web)
-llm-leaders --sort rank
+# (asc), name (asc), or a benchmark score (desc): web-score, code-score, or
+# bench (the --bench column when set, else Web Rank)
+llm-leaders --sort arena-rank
 llm-leaders --sort elo
 llm-leaders --sort input
 llm-leaders --sort output
 llm-leaders --sort name
-llm-leaders --sort or-web
+llm-leaders --sort web-score
 
 # keep only models cheaper than $1/M input (free models always pass;
 # models with no known price are dropped)
