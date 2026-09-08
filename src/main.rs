@@ -87,6 +87,14 @@ struct Cli {
     #[arg(long, global = true)]
     max_code_rank: Option<u64>,
 
+    /// Keep models ranking within the threshold in ANY rank column (OR):
+    /// Arena #, OR Web, Code — a model matching even one threshold is kept.
+    /// One value applies the same threshold to all three; three values set
+    /// per-column thresholds (arena web code). Models missing all three
+    /// ranks are dropped.
+    #[arg(long, global = true, num_args = 1..=3, value_names = ["ARENA", "WEB", "CODE"])]
+    max_any_rank: Vec<u64>,
+
     /// Show the full OpenRouter catalog instead of your curated models.txt list.
     #[arg(long, global = true)]
     all: bool,
@@ -152,6 +160,7 @@ fn main() -> Result<()> {
             min_code: cli.min_code,
             max_or_web_rank: cli.max_or_web_rank,
             max_code_rank: cli.max_code_rank,
+            max_any_rank: cli.max_any_rank,
             all: cli.all,
             refresh: cli
                 .refresh
@@ -210,6 +219,7 @@ struct TableOpts {
     min_code: Option<f64>,
     max_or_web_rank: Option<u64>,
     max_code_rank: Option<u64>,
+    max_any_rank: Vec<u64>,
     all: bool,
     refresh: Refresh,
 }
@@ -626,6 +636,19 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     }
     if let Some(max) = opts.max_code_rank {
         rows.retain(|r| r.code.map_or(false, |s| s.rank <= max));
+    }
+    if !opts.max_any_rank.is_empty() {
+        let (arena_max, web_max, code_max) = match opts.max_any_rank.as_slice() {
+            [a] => (*a, *a, *a),
+            [a, w, c] => (*a, *w, *c),
+            _ => bail!("--max-any-rank takes one threshold or three (arena web code)"),
+        };
+        // OR semantics: matching any one column's threshold keeps the model.
+        rows.retain(|r| {
+            r.rank.map_or(false, |rk| rk <= arena_max)
+                || r.web.map_or(false, |s| s.rank <= web_max)
+                || r.code.map_or(false, |s| s.rank <= code_max)
+        });
     }
     let dropped = before - rows.len();
 

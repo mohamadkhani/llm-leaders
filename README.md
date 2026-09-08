@@ -69,6 +69,12 @@ llm-leaders --min-code 1300
 llm-leaders --max-or-web-rank 20
 llm-leaders --max-code-rank 20
 
+# keep models ranking in the top 20 of ANY rank column (OR): a model is kept
+# if it matches even one of Arena #, OR Web, Code. One value = same threshold
+# for all three; three values = per-column thresholds (arena web code).
+llm-leaders --max-any-rank 20
+llm-leaders --max-any-rank 20 10 15
+
 # keep only free models / only discounted models
 llm-leaders --free
 llm-leaders --discounted
