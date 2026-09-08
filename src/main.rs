@@ -14,10 +14,11 @@ struct Cli {
     #[arg(long, global = true)]
     markdown: bool,
 
-    /// Sort column: rank (default, asc), elo (desc), input (input $/M asc),
-    /// output (output $/M asc), name (asc), or-web / code / bench (benchmark
-    /// score desc). "price" is an alias for "input".
-    #[arg(long, global = true, default_value = "rank")]
+    /// Sort column: code-rank (default, asc), rank (arena rank, asc),
+    /// elo (desc), input (input $/M asc), output (output $/M asc),
+    /// name (asc), or or-web / code / bench (benchmark score desc).
+    /// "price" is an alias for "input".
+    #[arg(long, global = true, default_value = "code-rank")]
     sort: String,
 
     /// Keep only models whose input price is at most this (USD per million tokens).
@@ -666,6 +667,12 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     // price: input asc, missing last. output: output asc, missing last.
     // name: asc.
     match opts.sort.as_str() {
+        // Code rank: asc, missing last — the primary default sort.
+        "code-rank" => rows.sort_by(|a, b| {
+            a.code
+                .map_or(u64::MAX, |s| s.rank)
+                .cmp(&b.code.map_or(u64::MAX, |s| s.rank))
+        }),
         "rank" => rows.sort_by(|a, b| {
             a.rank
                 .unwrap_or(u64::MAX)
@@ -701,7 +708,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         "or-web" => bench_score(&mut rows, &|r| r.web),
         "code" => bench_score(&mut rows, &|r| r.code),
         "bench" => bench_score(&mut rows, &cols.active()),
-        other => bail!("invalid --sort {other:?} (use rank|elo|input|output|name|or-web|code|bench)"),
+        other => bail!("invalid --sort {other:?} (use code-rank|rank|elo|input|output|name|or-web|code|bench)"),
     }
 
     if opts.markdown {
@@ -883,23 +890,23 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         .set_content_arrangement(ContentArrangement::Disabled)
         // Emit ANSI styles even when stdout isn't a TTY (e.g. piped to less -R).
         .enforce_styling();
-    let mut header = vec![
-        styled_cell("Arena #".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("Model".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("In $/M".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("Out $/M".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("Disc".to_string(), comfy_table::Color::Reset, true),
-        styled_cell("Elo".to_string(), comfy_table::Color::Reset, true),
-    ];
-    if let Some(n) = cols.web {
-        header.push(styled_cell(format!("OR Web/{n}"), comfy_table::Color::Reset, true));
-    }
+    // Code rank leads the table (primary sort); Arena # moved to the tail.
+    let mut header: Vec<comfy_table::Cell> = Vec::new();
     if let Some(n) = cols.code {
-        header.push(styled_cell(format!("Code/{n}"), comfy_table::Color::Reset, true));
+        header.push(styled_cell(format!("Code Rank/{n}"), comfy_table::Color::Reset, true));
+    }
+    header.extend(
+        ["Model", "In $/M", "Out $/M", "Disc", "Elo"]
+            .iter()
+            .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
+    );
+    if let Some(n) = cols.web {
+        header.push(styled_cell(format!("Web Rank/{n}"), comfy_table::Color::Reset, true));
     }
     if let Some((cat, n)) = &cols.extra {
         header.push(styled_cell(format!("{cat}/{n}"), comfy_table::Color::Reset, true));
     }
+    header.push(styled_cell("Arena Rank".to_string(), comfy_table::Color::Reset, true));
     header.push(styled_cell("ID".to_string(), comfy_table::Color::Reset, true));
     t.set_header(header);
     // Price-heat scale over the visible rows (after filtering).
@@ -973,8 +980,15 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 )
             }
         };
-        let mut cells = vec![
-            styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false),
+        let mut cells: Vec<comfy_table::Cell> = Vec::new();
+        if cols.code.is_some() {
+            cells.push(styled_cell(
+                fmt_bench(r.code),
+                score_heat(r.code.map(|s| s.score), code_min, code_max),
+                false,
+            ));
+        }
+        cells.extend([
             styled_cell(r.name.clone(), val_color, val_bold),
             {
                 let (c, b) = price_style(r.input);
@@ -999,18 +1013,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                     || r.discount.map_or(false, |d| d >= 0.30),
             ),
             styled_cell(fmt_elo(r.elo), elo_heat(r.elo, elo_min, elo_max), false),
-        ];
+        ]);
         if cols.web.is_some() {
             cells.push(styled_cell(
                 fmt_bench(r.web),
                 score_heat(r.web.map(|s| s.score), web_min, web_max),
-                false,
-            ));
-        }
-        if cols.code.is_some() {
-            cells.push(styled_cell(
-                fmt_bench(r.code),
-                score_heat(r.code.map(|s| s.score), code_min, code_max),
                 false,
             ));
         }
@@ -1021,6 +1028,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 false,
             ));
         }
+        cells.push(styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false));
         cells.push(styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false));
         t.add_row(cells);
     }
@@ -1060,44 +1068,48 @@ fn color_borders(table: &str, color: &str, reset: &str) -> String {
 }
 
 fn print_markdown(rows: &[Row], cols: &BenchCols) {
-    let mut head = String::from("| Arena # | Model | In $/M | Out $/M | Disc | Elo |");
-    let mut sep = String::from("|---:|---|---:|---:|---:|---:|");
-    if let Some(n) = cols.web {
-        head.push_str(&format!(" OR Web/{n} |"));
-        sep.push_str("---:|");
-    }
+    // Same column order as the terminal table: Code rank leads, Arena # moved
+    // to the tail before ID.
+    let mut head: Vec<String> = Vec::new();
+    let mut sep: Vec<&str> = Vec::new();
     if let Some(n) = cols.code {
-        head.push_str(&format!(" Code/{n} |"));
-        sep.push_str("---:|");
+        head.push(format!("Code Rank/{n}"));
+        sep.push("---:");
+    }
+    head.extend(["Model", "In $/M", "Out $/M", "Disc", "Elo"].map(String::from));
+    sep.extend(["---", "---:", "---:", "---:", "---:"]);
+    if let Some(n) = cols.web {
+        head.push(format!("Web Rank/{n}"));
+        sep.push("---:");
     }
     if let Some((cat, n)) = &cols.extra {
-        head.push_str(&format!(" {cat}/{n} |"));
-        sep.push_str("---:|");
+        head.push(format!("{cat}/{n}"));
+        sep.push("---:");
     }
-    head.push_str(" ID |");
-    sep.push_str("---|");
-    println!("{head}");
-    println!("{sep}");
+    head.push("Arena Rank".to_string());
+    sep.push("---:");
+    head.push("ID".to_string());
+    sep.push("---");
+    println!("| {} |", head.join(" | "));
+    println!("| {} |", sep.join("|"));
     for r in rows {
-        let mut body = format!(
-            "| {} | {} | {} | {} | {} | {} |",
-            fmt_rank(r.rank),
-            r.name,
-            fmt_price(r.input),
-            fmt_price(r.output),
-            fmt_discount(r.discount, r.input),
-            fmt_elo(r.elo),
-        );
-        if cols.web.is_some() {
-            body.push_str(&format!(" {} |", fmt_bench(r.web)));
-        }
+        let mut cells: Vec<String> = Vec::new();
         if cols.code.is_some() {
-            body.push_str(&format!(" {} |", fmt_bench(r.code)));
+            cells.push(fmt_bench(r.code));
+        }
+        cells.push(r.name.clone());
+        cells.push(fmt_price(r.input));
+        cells.push(fmt_price(r.output));
+        cells.push(fmt_discount(r.discount, r.input));
+        cells.push(fmt_elo(r.elo));
+        if cols.web.is_some() {
+            cells.push(fmt_bench(r.web));
         }
         if cols.extra.is_some() {
-            body.push_str(&format!(" {} |", fmt_bench(r.extra)));
+            cells.push(fmt_bench(r.extra));
         }
-        body.push_str(&format!(" `{}` |", r.id));
-        println!("{body}");
+        cells.push(fmt_rank(r.rank));
+        cells.push(format!("`{}`", r.id));
+        println!("| {} |", cells.join(" | "));
     }
 }
