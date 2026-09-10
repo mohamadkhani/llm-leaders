@@ -1,0 +1,229 @@
+{
+  "data": [
+    {
+      "id": "z-ai/glm-5.3",
+      "name": "Z.ai: GLM 5.3",
+      "canonical_slug": "z-ai/glm-5.3-20260816",
+      "pricing": {
+        "prompt": "0.0000014",
+        "completion": "0.0000044"
+      }
+    },
+    {
+      "id": "qwen/qwen3.8-27b",
+      "name": "Qwen: Qwen3.8 27B",
+      "canonical_slug": "qwen/qwen3.8-27b-20260814",
+      "pricing": {
+        "prompt": "0.0000004",
+        "completion": "0.000003"
+      }
+    },
+    {
+      "id": "qwen/qwen3.8-2.4t-a95b",
+      "name": "Qwen: Qwen3.8 2.4T A95B",
+      "canonical_slug": "qwen/qwen3.8-2.4t-a95b-20260812",
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.000006"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-pro-0813",
+      "name": "DeepSeek: DeepSeek V4 Pro 0813",
+      "canonical_slug": "deepseek/deepseek-v4-pro-20260813",
+      "pricing": {
+        "prompt": "0.000001122",
+        "completion": "0.000003366"
+      }
+    },
+    {
+      "id": "qwen/qwen3.8-max",
+      "name": "Qwen: Qwen3.8 Max",
+      "canonical_slug": "qwen/qwen3.8-max-20260803",
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.000006"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731",
+      "canonical_slug": "deepseek/deepseek-v4-flash-20260731",
+      "pricing": {
+        "prompt": "0.00000008",
+        "completion": "0.00000018"
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-5-fast",
+      "name": "Claude Opus 5 (Fast)",
+      "canonical_slug": "anthropic/claude-opus-5-fast-20260723",
+      "pricing": {
+        "prompt": "0.00001",
+        "completion": "0.00005"
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-5",
+      "name": "Claude Opus 5",
+      "canonical_slug": "anthropic/claude-opus-5-20260723",
+      "pricing": {
+        "prompt": "0.000005",
+        "completion": "0.000025"
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-5:batch",
+      "name": "Claude Opus 5 (batch)",
+      "canonical_slug": "anthropic/claude-opus-5-20260723",
+      "pricing": {
+        "prompt": "0.0000025",
+        "completion": "0.0000125"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.2",
+      "name": "Z.ai: GLM 5.2",
+      "canonical_slug": "z-ai/glm-5.2-20260616",
+      "pricing": {
+        "prompt": "0.000000966",
+        "completion": "0.000003036"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.2:batch",
+      "name": "Z.ai: GLM 5.2 (batch)",
+      "canonical_slug": "z-ai/glm-5.2-20260616",
+      "pricing": {
+        "prompt": "0.0000014",
+        "completion": "0.0000044"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.2:free",
+      "name": "Z.ai: GLM 5.2 (free)",
+      "canonical_slug": "z-ai/glm-5.2-20260616",
+      "pricing": {
+        "prompt": "0",
+        "completion": "0"
+      }
+    },
+    {
+      "id": "moonshotai/kimi-k2.7-code",
+      "name": "MoonshotAI: Kimi K2.7 Code",
+      "canonical_slug": "moonshotai/kimi-k2.7-code-20260612",
+      "pricing": {
+        "prompt": "0.00000067",
+        "completion": "0.0000034"
+      }
+    },
+    {
+      "id": "moonshotai/kimi-k2.7-code:batch",
+      "name": "MoonshotAI: Kimi K2.7 Code (batch)",
+      "canonical_slug": "moonshotai/kimi-k2.7-code-20260612",
+      "pricing": {
+        "prompt": "0.00000095",
+        "completion": "0.000004"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-pro",
+      "name": "DeepSeek: DeepSeek V4 Pro 0423",
+      "canonical_slug": "deepseek/deepseek-v4-pro-20260423",
+      "pricing": {
+        "prompt": "0.000000396894",
+        "completion": "0.000000793788"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash",
+      "name": "DeepSeek: DeepSeek V4 Flash 0423",
+      "canonical_slug": "deepseek/deepseek-v4-flash-20260423",
+      "pricing": {
+        "prompt": "0.00000004886",
+        "completion": "0.00000009772"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.1",
+      "name": "Z.ai: GLM 5.1",
+      "canonical_slug": "z-ai/glm-5.1-20260406",
+      "pricing": {
+        "prompt": "0.000000966",
+        "completion": "0.000003036"
+      }
+    },
+    {
+      "id": "z-ai/glm-5v-turbo",
+      "name": "Z.ai: GLM 5V Turbo",
+      "canonical_slug": "z-ai/glm-5v-turbo-20260401",
+      "pricing": {
+        "prompt": "0.0000012",
+        "completion": "0.000004"
+      }
+    },
+    {
+      "id": "z-ai/glm-5-turbo",
+      "name": "Z.ai: GLM 5 Turbo",
+      "canonical_slug": "z-ai/glm-5-turbo-20260315",
+      "pricing": {
+        "prompt": "0.0000012",
+        "completion": "0.000004"
+      }
+    },
+    {
+      "id": "z-ai/glm-5",
+      "name": "Z.ai: GLM 5",
+      "canonical_slug": "z-ai/glm-5-20260211",
+      "pricing": {
+        "prompt": "0.0000006",
+        "completion": "0.00000192"
+      }
+    },
+    {
+      "id": "z-ai/glm-4.7",
+      "name": "Z.ai: GLM 4.7",
+      "canonical_slug": "z-ai/glm-4.7-20251222",
+      "pricing": {
+        "prompt": "0.0000004",
+        "completion": "0.00000175"
+      }
+    },
+    {
+      "id": "z-ai/glm-4.6v",
+      "name": "Z.ai: GLM 4.6V",
+      "canonical_slug": "z-ai/glm-4.6-20251208",
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000009"
+      }
+    },
+    {
+      "id": "z-ai/glm-4.6",
+      "name": "Z.ai: GLM 4.6",
+      "canonical_slug": "z-ai/glm-4.6",
+      "pricing": {
+        "prompt": "0.0000005",
+        "completion": "0.000002"
+      }
+    },
+    {
+      "id": "z-ai/glm-4.5v",
+      "name": "Z.ai: GLM 4.5V",
+      "canonical_slug": "z-ai/glm-4.5v",
+      "pricing": {
+        "prompt": "0.0000006",
+        "completion": "0.0000018"
+      }
+    },
+    {
+      "id": "z-ai/glm-4.5",
+      "name": "Z.ai: GLM 4.5",
+      "canonical_slug": "z-ai/glm-4.5",
+      "pricing": {
+        "prompt": "0.0000006",
+        "completion": "0.0000022"
+      }
+    }
+  ]
+}

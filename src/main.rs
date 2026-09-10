@@ -15,9 +15,10 @@ struct Cli {
     markdown: bool,
 
     /// Sort column: code-rank (default, asc), arena-rank (asc), elo (desc),
-    /// input (input $/M asc), output (output $/M asc), name (asc), or
-    /// web-score / code-score / bench (benchmark score desc). "price" is an
-    /// alias for "input"; old keys rank, or-web, code still work.
+    /// input (input $/M asc), output (output $/M asc), name (asc), ctx
+    /// (context length desc), or web-score / code-score / bench (benchmark
+    /// score desc). "price" is an alias for "input"; old keys rank, or-web,
+    /// code still work.
     #[arg(long, global = true, default_value = "code-rank")]
     sort: String,
 
@@ -393,6 +394,8 @@ fn interactive_remove(current: &[String]) -> Result<Vec<String>> {
 struct Row {
     id: String,
     name: String,
+    /// Model's declared context length (tokens), from the OpenRouter catalog.
+    ctx: Option<u64>,
     input: Option<f64>,
     output: Option<f64>,
     discount: Option<f64>,
@@ -583,6 +586,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             Row {
                 id: model.id.clone(),
                 name: model.name.clone(),
+                ctx: model.context_length,
                 input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
                 output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
                 discount: best.and_then(|b| b.discount),
@@ -705,10 +709,15 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .unwrap_or(std::cmp::Ordering::Equal)
         }),
         "name" => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        // ctx: larger window first, missing last.
+        "ctx" => rows.sort_by(|a, b| {
+            b.ctx.unwrap_or(0)
+                .cmp(&a.ctx.unwrap_or(0))
+        }),
         "web-score" | "or-web" => bench_score(&mut rows, &|r| r.web),
         "code-score" | "code" => bench_score(&mut rows, &|r| r.code),
         "bench" => bench_score(&mut rows, &cols.active()),
-        other => bail!("invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|web-score|code-score|bench)"),
+        other => bail!("invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|ctx|web-score|code-score|bench)"),
     }
 
     if opts.markdown {
@@ -726,6 +735,16 @@ fn fmt_price(v: Option<f64>) -> String {
     match v {
         Some(p) if p > 0.0 => format!("${:.2}", p),
         Some(_) => "free".to_string(),
+        None => "—".to_string(),
+    }
+}
+
+/// Context window in tokens, human-suffixed (128000 → "128K", 1000000 → "1M").
+fn fmt_ctx(v: Option<u64>) -> String {
+    match v {
+        Some(n) if n >= 1_000_000 => format!("{}M", n / 1_000_000),
+        Some(n) if n >= 1_000 => format!("{}K", n / 1_000),
+        Some(n) => format!("{n}"),
         None => "—".to_string(),
     }
 }
@@ -834,6 +853,18 @@ fn score_heat(score: Option<f64>, min: f64, max: f64) -> comfy_table::Color {
     heat_rgb(t)
 }
 
+/// Context-window heat: largest window in view = green, smallest = red. Same
+/// ramp as Elo (bigger is better), scaled over the rows actually displayed.
+fn ctx_heat(ctx: Option<u64>, min: u64, max: u64) -> comfy_table::Color {
+    let c = match ctx {
+        Some(c) if max > min => c,
+        _ => return comfy_table::Color::Reset,
+    };
+    // Larger window = greener; invert t so 0 -> green.
+    let t = 1.0 - ((c - min) as f64 / (max - min) as f64).clamp(0.0, 1.0);
+    heat_rgb(t)
+}
+
 /// Value-for-money heat for the model name: how much arena quality a model
 /// delivers per dollar, relative to the rows actually displayed. Best value
 /// in view = green, worst = red. Free models (price 0) get an even deeper
@@ -896,7 +927,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         header.push(styled_cell(format!("Code Rank/{n}"), comfy_table::Color::Reset, true));
     }
     header.extend(
-        ["Model", "In $/M", "Out $/M", "Disc", "Elo"]
+        ["Model", "Ctx", "In $/M", "Out $/M", "Disc", "Elo"]
             .iter()
             .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
     );
@@ -931,6 +962,12 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     let (elo_min, elo_max) = (
         elos.iter().cloned().fold(f64::INFINITY, f64::min),
         elos.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+    );
+    // Context-window heat: largest window in view = green, smallest = red.
+    let ctxs: Vec<u64> = rows.iter().filter_map(|r| r.ctx).collect();
+    let (ctx_min, ctx_max) = (
+        ctxs.iter().cloned().min().unwrap_or(0),
+        ctxs.iter().cloned().max().unwrap_or(0),
     );
     // Benchmark-score heat: one scale per column, over the visible scores.
     // Higher = greener, same ramp as Elo.
@@ -980,6 +1017,9 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 )
             }
         };
+        let ctx_style = |c: Option<u64>| -> (comfy_table::Color, bool) {
+            (ctx_heat(c, ctx_min, ctx_max), false)
+        };
         let mut cells: Vec<comfy_table::Cell> = Vec::new();
         if cols.code.is_some() {
             cells.push(styled_cell(
@@ -990,6 +1030,10 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         }
         cells.extend([
             styled_cell(r.name.clone(), val_color, val_bold),
+            {
+                let (c, b) = ctx_style(r.ctx);
+                styled_cell(fmt_ctx(r.ctx), c, b)
+            },
             {
                 let (c, b) = price_style(r.input);
                 styled_cell(fmt_price(r.input), c, b)
@@ -1076,8 +1120,8 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
         head.push(format!("Code Rank/{n}"));
         sep.push("---:");
     }
-    head.extend(["Model", "In $/M", "Out $/M", "Disc", "Elo"].map(String::from));
-    sep.extend(["---", "---:", "---:", "---:", "---:"]);
+    head.extend(["Model", "Ctx", "In $/M", "Out $/M", "Disc", "Elo"].map(String::from));
+    sep.extend(["---", "---:", "---:", "---:", "---:", "---:"]);
     if let Some(n) = cols.web {
         head.push(format!("Web Rank/{n}"));
         sep.push("---:");
@@ -1098,6 +1142,7 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
             cells.push(fmt_bench(r.code));
         }
         cells.push(r.name.clone());
+        cells.push(fmt_ctx(r.ctx));
         cells.push(fmt_price(r.input));
         cells.push(fmt_price(r.output));
         cells.push(fmt_discount(r.discount, r.input));

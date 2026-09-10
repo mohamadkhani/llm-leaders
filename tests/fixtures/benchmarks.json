@@ -1,0 +1,1866 @@
+{
+  "data": {
+    "daData": {
+      "models-website": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1372,
+          "win_rate": 62.9,
+          "avg_generation_time_ms": 648002
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1332,
+          "win_rate": 57.6,
+          "avg_generation_time_ms": 296181
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1326,
+          "win_rate": 57.4,
+          "avg_generation_time_ms": 278591
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1304,
+          "win_rate": 53.5,
+          "avg_generation_time_ms": 563113
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1292,
+          "win_rate": 53.6,
+          "avg_generation_time_ms": 340045
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1290,
+          "win_rate": 55.1,
+          "avg_generation_time_ms": 302826
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1289,
+          "win_rate": 54,
+          "avg_generation_time_ms": 308833
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1289,
+          "win_rate": 54.7,
+          "avg_generation_time_ms": 344838
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1268,
+          "win_rate": 55,
+          "avg_generation_time_ms": 232559
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1262,
+          "win_rate": 47.7,
+          "avg_generation_time_ms": 229303
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1255,
+          "win_rate": 51.3,
+          "avg_generation_time_ms": 280090
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1251,
+          "win_rate": 50.1,
+          "avg_generation_time_ms": 211218
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1246,
+          "win_rate": 55.3,
+          "avg_generation_time_ms": 171638
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1228,
+          "win_rate": 49.1,
+          "avg_generation_time_ms": 143713
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1214,
+          "win_rate": 54,
+          "avg_generation_time_ms": 159006
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1194,
+          "win_rate": 54.3,
+          "avg_generation_time_ms": 115091
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1190,
+          "win_rate": 53.7,
+          "avg_generation_time_ms": 147745
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1167,
+          "win_rate": 51.3,
+          "avg_generation_time_ms": 126506
+        }
+      ],
+      "models-3d": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1445,
+          "win_rate": 69.3,
+          "avg_generation_time_ms": 617891
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1380,
+          "win_rate": 63.8,
+          "avg_generation_time_ms": 310740
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1376,
+          "win_rate": 59.6,
+          "avg_generation_time_ms": 612372
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1347,
+          "win_rate": 56.9,
+          "avg_generation_time_ms": 384675
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1336,
+          "win_rate": 62.6,
+          "avg_generation_time_ms": 292283
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1301,
+          "win_rate": 57.6,
+          "avg_generation_time_ms": 309676
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1297,
+          "win_rate": 57.8,
+          "avg_generation_time_ms": 315045
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1295,
+          "win_rate": 54,
+          "avg_generation_time_ms": 386781
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1289,
+          "win_rate": 52.2,
+          "avg_generation_time_ms": 254325
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1274,
+          "win_rate": 56.3,
+          "avg_generation_time_ms": 134682
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1256,
+          "win_rate": 50.8,
+          "avg_generation_time_ms": 243214
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1255,
+          "win_rate": 53.9,
+          "avg_generation_time_ms": 104395
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1236,
+          "win_rate": 54.3,
+          "avg_generation_time_ms": 143408
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1234,
+          "win_rate": 49.3,
+          "avg_generation_time_ms": 106950
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1216,
+          "win_rate": 59.7,
+          "avg_generation_time_ms": 108654
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1174,
+          "win_rate": 54.2,
+          "avg_generation_time_ms": 80173
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1168,
+          "win_rate": 54.1,
+          "avg_generation_time_ms": 86566
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1166,
+          "win_rate": 51.2,
+          "avg_generation_time_ms": 116926
+        }
+      ],
+      "models-codecategories": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1407,
+          "win_rate": 66.1,
+          "avg_generation_time_ms": 631397
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1350,
+          "win_rate": 59.4,
+          "avg_generation_time_ms": 290100
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1331,
+          "win_rate": 56.5,
+          "avg_generation_time_ms": 321371
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1323,
+          "win_rate": 55.3,
+          "avg_generation_time_ms": 577879
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1294,
+          "win_rate": 54.6,
+          "avg_generation_time_ms": 342282
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1292,
+          "win_rate": 55.6,
+          "avg_generation_time_ms": 344559
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1283,
+          "win_rate": 52.2,
+          "avg_generation_time_ms": 305798
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1272,
+          "win_rate": 55.5,
+          "avg_generation_time_ms": 197092
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1267,
+          "win_rate": 52.8,
+          "avg_generation_time_ms": 290255
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1258,
+          "win_rate": 47.6,
+          "avg_generation_time_ms": 237643
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1254,
+          "win_rate": 51.2,
+          "avg_generation_time_ms": 179266
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1242,
+          "win_rate": 54.8,
+          "avg_generation_time_ms": 165145
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1230,
+          "win_rate": 48.9,
+          "avg_generation_time_ms": 134396
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1202,
+          "win_rate": 53.1,
+          "avg_generation_time_ms": 150068
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1190,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": 141426
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1190,
+          "win_rate": 54.3,
+          "avg_generation_time_ms": 109303
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1162,
+          "win_rate": 51.4,
+          "avg_generation_time_ms": 121133
+        }
+      ],
+      "models-dataviz": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1376,
+          "win_rate": 64.9,
+          "avg_generation_time_ms": 635412
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1366,
+          "win_rate": 67,
+          "avg_generation_time_ms": 259663
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1358,
+          "win_rate": 60.8,
+          "avg_generation_time_ms": 219340
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1324,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": 287079
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1286,
+          "win_rate": 57,
+          "avg_generation_time_ms": 271590
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1280,
+          "win_rate": 54.2,
+          "avg_generation_time_ms": 274642
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1271,
+          "win_rate": 51.2,
+          "avg_generation_time_ms": 566120
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1250,
+          "win_rate": 53,
+          "avg_generation_time_ms": 150246
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1242,
+          "win_rate": 49.8,
+          "avg_generation_time_ms": 227816
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1223,
+          "win_rate": 48.8,
+          "avg_generation_time_ms": 243161
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1219,
+          "win_rate": 47.8,
+          "avg_generation_time_ms": 135764
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1217,
+          "win_rate": 51.2,
+          "avg_generation_time_ms": 153476
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1208,
+          "win_rate": 58.5,
+          "avg_generation_time_ms": 99892
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1197,
+          "win_rate": 40.3,
+          "avg_generation_time_ms": 238295
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1183,
+          "win_rate": 52.6,
+          "avg_generation_time_ms": 86069
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1181,
+          "win_rate": 53.3,
+          "avg_generation_time_ms": 116502
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1148,
+          "win_rate": 40.6,
+          "avg_generation_time_ms": 94435
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1145,
+          "win_rate": 45.3,
+          "avg_generation_time_ms": 126750
+        }
+      ],
+      "models-gamedev": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1431,
+          "win_rate": 68.2,
+          "avg_generation_time_ms": 697100
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1381,
+          "win_rate": 62.2,
+          "avg_generation_time_ms": 365937
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1340,
+          "win_rate": 57.7,
+          "avg_generation_time_ms": 611644
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1322,
+          "win_rate": 54.1,
+          "avg_generation_time_ms": 391495
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1298,
+          "win_rate": 57.5,
+          "avg_generation_time_ms": 433101
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1291,
+          "win_rate": 55.9,
+          "avg_generation_time_ms": 468421
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1270,
+          "win_rate": 57.4,
+          "avg_generation_time_ms": 189733
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1269,
+          "win_rate": 54,
+          "avg_generation_time_ms": 340555
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1253,
+          "win_rate": 52.4,
+          "avg_generation_time_ms": 163750
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1252,
+          "win_rate": 49.7,
+          "avg_generation_time_ms": 308342
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1249,
+          "win_rate": 46.1,
+          "avg_generation_time_ms": 265999
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1233,
+          "win_rate": 50.2,
+          "avg_generation_time_ms": 172912
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1224,
+          "win_rate": 55.2,
+          "avg_generation_time_ms": 167682
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1187,
+          "win_rate": 54.8,
+          "avg_generation_time_ms": 108718
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1181,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": 139666
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1171,
+          "win_rate": 49.7,
+          "avg_generation_time_ms": 153698
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1130,
+          "win_rate": 48.4,
+          "avg_generation_time_ms": 117390
+        }
+      ],
+      "models-svg": [
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1368,
+          "win_rate": 63.2,
+          "avg_generation_time_ms": 103802
+        },
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1356,
+          "win_rate": 65.6,
+          "avg_generation_time_ms": 385751
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1259,
+          "win_rate": 58.5,
+          "avg_generation_time_ms": 169515
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1255,
+          "win_rate": 54.6,
+          "avg_generation_time_ms": 215048
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1247,
+          "win_rate": 56.5,
+          "avg_generation_time_ms": 164802
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1216,
+          "win_rate": 48.1,
+          "avg_generation_time_ms": 146673
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1209,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": 57025
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1195,
+          "win_rate": 48.4,
+          "avg_generation_time_ms": 111980
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1192,
+          "win_rate": 50.5,
+          "avg_generation_time_ms": 43174
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1184,
+          "win_rate": 54.3,
+          "avg_generation_time_ms": 90374
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1178,
+          "win_rate": 45.8,
+          "avg_generation_time_ms": 249592
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1150,
+          "win_rate": 52.1,
+          "avg_generation_time_ms": 33248
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1137,
+          "win_rate": 50.8,
+          "avg_generation_time_ms": 36623
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1112,
+          "win_rate": 50.8,
+          "avg_generation_time_ms": 41941
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1079,
+          "win_rate": 44.2,
+          "avg_generation_time_ms": 81729
+        }
+      ],
+      "models-uicomponent": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1377,
+          "win_rate": 63.3,
+          "avg_generation_time_ms": 604002
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1371,
+          "win_rate": 61.7,
+          "avg_generation_time_ms": 208123
+        },
+        {
+          "da_model_id": "qwen3.8-max-preview",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1362,
+          "win_rate": 61.4,
+          "avg_generation_time_ms": 532955
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1328,
+          "win_rate": 57.8,
+          "avg_generation_time_ms": 287109
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1294,
+          "win_rate": 54.5,
+          "avg_generation_time_ms": 239255
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1292,
+          "win_rate": 54.9,
+          "avg_generation_time_ms": 256840
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1291,
+          "win_rate": 56.8,
+          "avg_generation_time_ms": 261520
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1291,
+          "win_rate": 53.1,
+          "avg_generation_time_ms": 240473
+        },
+        {
+          "da_model_id": "deepseek-v4-flash-0731",
+          "permaslug": "deepseek/deepseek-v4-flash-20260731",
+          "openrouter_id": "deepseek/deepseek-v4-flash-0731",
+          "display_name": "DeepSeek-V4-Flash-0731",
+          "score": 1266,
+          "win_rate": 47.7,
+          "avg_generation_time_ms": 232903
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1258,
+          "win_rate": 53.6,
+          "avg_generation_time_ms": 161444
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1250,
+          "win_rate": 51.2,
+          "avg_generation_time_ms": 227801
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1242,
+          "win_rate": 50.3,
+          "avg_generation_time_ms": 147206
+        },
+        {
+          "da_model_id": "glm-4.7-flash",
+          "permaslug": "z-ai/glm-4.7-flash-20260119",
+          "openrouter_id": "z-ai/glm-4.7-flash",
+          "display_name": "GLM 4.7 Flash",
+          "score": 1235,
+          "win_rate": 57.6,
+          "avg_generation_time_ms": 116336
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1227,
+          "win_rate": 51,
+          "avg_generation_time_ms": 152079
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1191,
+          "win_rate": 44.7,
+          "avg_generation_time_ms": 104930
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1175,
+          "win_rate": 52.5,
+          "avg_generation_time_ms": 86789
+        },
+        {
+          "da_model_id": "glm-4.5",
+          "permaslug": "z-ai/glm-4.5",
+          "openrouter_id": "z-ai/glm-4.5",
+          "display_name": "GLM 4.5",
+          "score": 1171,
+          "win_rate": 55,
+          "avg_generation_time_ms": 102045
+        },
+        {
+          "da_model_id": "glm-4.5-air",
+          "permaslug": "z-ai/glm-4.5-air",
+          "openrouter_id": "z-ai/glm-4.5-air",
+          "display_name": "GLM 4.5 Air",
+          "score": 1150,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": 93620
+        }
+      ],
+      "agents-agenticgamedev": [
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1187,
+          "win_rate": 49.2,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1173,
+          "win_rate": 50.9,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1138,
+          "win_rate": 43.4,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1108,
+          "win_rate": 42.6,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-agentichtmlslides": [
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1205,
+          "win_rate": 52,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1134,
+          "win_rate": 41.7,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-agenticslides(html)": [
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1204,
+          "win_rate": 51.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1137,
+          "win_rate": 41.8,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-androidnative": [
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1267,
+          "win_rate": 54.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1254,
+          "win_rate": 56.6,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1204,
+          "win_rate": 52.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1203,
+          "win_rate": 54.9,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1171,
+          "win_rate": 55.2,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1161,
+          "win_rate": 46.4,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1140,
+          "win_rate": 56.2,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1111,
+          "win_rate": 52.6,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-fullstack": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1367,
+          "win_rate": 67.9,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1353,
+          "win_rate": 69.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "qwen3.8-max",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1339,
+          "win_rate": 65.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1269,
+          "win_rate": 61.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1208,
+          "win_rate": 52.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1199,
+          "win_rate": 54.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1182,
+          "win_rate": 52.1,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1155,
+          "win_rate": 51.7,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1083,
+          "win_rate": 45.1,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1062,
+          "win_rate": 42.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 948,
+          "win_rate": 22.1,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-godotgamedev": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1199,
+          "win_rate": 48.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1183,
+          "win_rate": 49.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1180,
+          "win_rate": 53.2,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1144,
+          "win_rate": 46.7,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1142,
+          "win_rate": 40.1,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1104,
+          "win_rate": 39.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1059,
+          "win_rate": 34,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1058,
+          "win_rate": 35.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 996,
+          "win_rate": 26.8,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-htmlslides": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1262,
+          "win_rate": 59.1,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1215,
+          "win_rate": 54.2,
+          "avg_generation_time_ms": 388641
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1190,
+          "win_rate": 50,
+          "avg_generation_time_ms": 329327
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1184,
+          "win_rate": 49.4,
+          "avg_generation_time_ms": 376499
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1160,
+          "win_rate": 45.2,
+          "avg_generation_time_ms": 368103
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1134,
+          "win_rate": 44.7,
+          "avg_generation_time_ms": 323817
+        }
+      ],
+      "agents-mobileapps": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1290,
+          "win_rate": 57.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "qwen3.8-max",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1265,
+          "win_rate": 55.6,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1212,
+          "win_rate": 51.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1211,
+          "win_rate": 53.2,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1199,
+          "win_rate": 49.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1188,
+          "win_rate": 51.7,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1184,
+          "win_rate": 50.4,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1156,
+          "win_rate": 48.9,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-4.6",
+          "permaslug": "z-ai/glm-4.6",
+          "openrouter_id": "z-ai/glm-4.6",
+          "display_name": "GLM 4.6",
+          "score": 1147,
+          "win_rate": 47.2,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-python-pptxslides": [
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1296,
+          "win_rate": 59.6,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1258,
+          "win_rate": 54.2,
+          "avg_generation_time_ms": 581527
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1218,
+          "win_rate": 49.1,
+          "avg_generation_time_ms": 516692
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1211,
+          "win_rate": 51,
+          "avg_generation_time_ms": 580912
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1168,
+          "win_rate": 44.4,
+          "avg_generation_time_ms": 705026
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1166,
+          "win_rate": 49.3,
+          "avg_generation_time_ms": 730515
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1165,
+          "win_rate": 51.9,
+          "avg_generation_time_ms": 858676
+        }
+      ],
+      "agents-webapps": [
+        {
+          "da_model_id": "qwen3.8-max",
+          "permaslug": "qwen/qwen3.8-max-20260803",
+          "openrouter_id": "qwen/qwen3.8-max",
+          "display_name": "Qwen3.8 Max",
+          "score": 1340,
+          "win_rate": 63.9,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k3",
+          "permaslug": "moonshotai/kimi-k3-20260715",
+          "openrouter_id": "moonshotai/kimi-k3",
+          "display_name": "Kimi K3",
+          "score": 1333,
+          "win_rate": 63.1,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "claude-opus-5",
+          "permaslug": "anthropic/claude-opus-5-20260723",
+          "openrouter_id": "anthropic/claude-opus-5",
+          "display_name": "Claude Opus 5",
+          "score": 1274,
+          "win_rate": 55.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1256,
+          "win_rate": 56.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1213,
+          "win_rate": 52.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1212,
+          "win_rate": 47.8,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1161,
+          "win_rate": 44.7,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1000,
+          "win_rate": 26.4,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "models-asciiart": [
+        {
+          "da_model_id": "glm-5.2",
+          "permaslug": "z-ai/glm-5.2-20260616",
+          "openrouter_id": "z-ai/glm-5.2",
+          "display_name": "GLM 5.2",
+          "score": 1251,
+          "win_rate": 52.1,
+          "avg_generation_time_ms": 310238
+        },
+        {
+          "da_model_id": "kimi-k2.7-code",
+          "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+          "openrouter_id": "moonshotai/kimi-k2.7-code",
+          "display_name": "Kimi K2.7 Code",
+          "score": 1243,
+          "win_rate": 52.4,
+          "avg_generation_time_ms": 314174
+        },
+        {
+          "da_model_id": "glm-4.7",
+          "permaslug": "z-ai/glm-4.7-20251222",
+          "openrouter_id": "z-ai/glm-4.7",
+          "display_name": "GLM 4.7",
+          "score": 1193,
+          "win_rate": 48.1,
+          "avg_generation_time_ms": 156554
+        },
+        {
+          "da_model_id": "glm-5-turbo",
+          "permaslug": "z-ai/glm-5-turbo-20260315",
+          "openrouter_id": "z-ai/glm-5-turbo",
+          "display_name": "GLM 5 Turbo",
+          "score": 1180,
+          "win_rate": 49.4,
+          "avg_generation_time_ms": 309541
+        },
+        {
+          "da_model_id": "deepseek-v4-pro",
+          "permaslug": "deepseek/deepseek-v4-pro-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-pro",
+          "display_name": "DeepSeek-V4-Pro",
+          "score": 1178,
+          "win_rate": 46.8,
+          "avg_generation_time_ms": 281035
+        },
+        {
+          "da_model_id": "glm-5",
+          "permaslug": "z-ai/glm-5-20260211",
+          "openrouter_id": "z-ai/glm-5",
+          "display_name": "GLM 5",
+          "score": 1175,
+          "win_rate": 47.9,
+          "avg_generation_time_ms": 83337
+        },
+        {
+          "da_model_id": "coconut",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1160,
+          "win_rate": 45.5,
+          "avg_generation_time_ms": 314346
+        },
+        {
+          "da_model_id": "deepseek-v4-flash",
+          "permaslug": "deepseek/deepseek-v4-flash-20260423",
+          "openrouter_id": "deepseek/deepseek-v4-flash",
+          "display_name": "DeepSeek-V4-Flash",
+          "score": 1137,
+          "win_rate": 42.8,
+          "avg_generation_time_ms": 111546
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1137,
+          "win_rate": 43.3,
+          "avg_generation_time_ms": 109312
+        }
+      ],
+      "agents-agenticslides": [
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1245,
+          "win_rate": 54.4,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1171,
+          "win_rate": 51.6,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-agenticslides(python-pptx)": [
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1240,
+          "win_rate": 53.3,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1183,
+          "win_rate": 53.9,
+          "avg_generation_time_ms": null
+        }
+      ],
+      "agents-pptxslides": [
+        {
+          "da_model_id": "glm-5.1",
+          "permaslug": "z-ai/glm-5.1-20260406",
+          "openrouter_id": "z-ai/glm-5.1",
+          "display_name": "GLM 5.1",
+          "score": 1241,
+          "win_rate": 53.5,
+          "avg_generation_time_ms": null
+        },
+        {
+          "da_model_id": "glm-5v-turbo",
+          "permaslug": "z-ai/glm-5v-turbo-20260401",
+          "openrouter_id": "z-ai/glm-5v-turbo",
+          "display_name": "GLM 5V Turbo",
+          "score": 1164,
+          "win_rate": 52.1,
+          "avg_generation_time_ms": null
+        }
+      ]
+    }
+  }
+}

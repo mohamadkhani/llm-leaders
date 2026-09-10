@@ -1,0 +1,429 @@
+{
+  "data": [
+    {
+      "slug": "z-ai/glm-5.3",
+      "permaslug": "z-ai/glm-5.3-20260816",
+      "name": "Z.ai: GLM 5.3",
+      "short_name": "GLM 5.3",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5.3",
+        "variant": "standard",
+        "provider_name": "Z.AI",
+        "pricing": {
+          "prompt": "0.0000014",
+          "completion": "0.0000044",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "qwen/qwen3.8-27b",
+      "permaslug": "qwen/qwen3.8-27b-20260814",
+      "name": "Qwen: Qwen3.8 27B",
+      "short_name": "Qwen3.8 27B",
+      "author_display_name": "Qwen",
+      "endpoint": {
+        "model_variant_slug": "qwen/qwen3.8-27b",
+        "variant": "standard",
+        "provider_name": "Chutes",
+        "pricing": {
+          "prompt": "0.00000035",
+          "completion": "0.00000275",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "qwen/qwen3.8-2.4t-a95b",
+      "permaslug": "qwen/qwen3.8-2.4t-a95b-20260812",
+      "name": "Qwen: Qwen3.8 2.4T A95B",
+      "short_name": "Qwen3.8 2.4T A95B",
+      "author_display_name": "Qwen",
+      "endpoint": {
+        "model_variant_slug": "qwen/qwen3.8-2.4t-a95b",
+        "variant": "standard",
+        "provider_name": "DeepInfra",
+        "pricing": {
+          "prompt": "0.000002",
+          "completion": "0.000006",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "deepseek/deepseek-v4-pro-0813",
+      "permaslug": "deepseek/deepseek-v4-pro-20260813",
+      "name": "DeepSeek: DeepSeek V4 Pro 0813",
+      "short_name": "DeepSeek V4 Pro 0813",
+      "author_display_name": "DeepSeek",
+      "endpoint": {
+        "model_variant_slug": "deepseek/deepseek-v4-pro-0813",
+        "variant": "standard",
+        "provider_name": "Alibaba",
+        "pricing": {
+          "prompt": "0.000000627",
+          "completion": "0.000001881",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "qwen/qwen3.8-max",
+      "permaslug": "qwen/qwen3.8-max-20260803",
+      "name": "Qwen: Qwen3.8 Max",
+      "short_name": "Qwen3.8 Max",
+      "author_display_name": "Qwen",
+      "endpoint": {
+        "model_variant_slug": "qwen/qwen3.8-max",
+        "variant": "standard",
+        "provider_name": "Alibaba",
+        "pricing": {
+          "prompt": "0.000002",
+          "completion": "0.000006",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "deepseek/deepseek-v4-flash-0731",
+      "permaslug": "deepseek/deepseek-v4-flash-20260731",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731",
+      "short_name": "DeepSeek V4 Flash 0731",
+      "author_display_name": "DeepSeek",
+      "endpoint": {
+        "model_variant_slug": "deepseek/deepseek-v4-flash-0731",
+        "variant": "standard",
+        "provider_name": "Relace",
+        "pricing": {
+          "prompt": "0.00000004",
+          "completion": "0.00000008",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "anthropic/claude-opus-5-fast",
+      "permaslug": "anthropic/claude-opus-5-fast-20260723",
+      "name": "Claude Opus 5 (Fast)",
+      "short_name": "Claude Opus 5 (Fast)",
+      "author_display_name": "Anthropic",
+      "endpoint": {
+        "model_variant_slug": "anthropic/claude-opus-5-fast",
+        "variant": "standard",
+        "provider_name": "Anthropic",
+        "pricing": {
+          "prompt": "0.00001",
+          "completion": "0.00005",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "anthropic/claude-opus-5",
+      "permaslug": "anthropic/claude-opus-5-20260723",
+      "name": "Claude Opus 5 (batch)",
+      "short_name": "Claude Opus 5 (batch)",
+      "author_display_name": "Anthropic",
+      "endpoint": {
+        "model_variant_slug": "anthropic/claude-opus-5:batch",
+        "variant": "batch",
+        "provider_name": "Anthropic",
+        "pricing": {
+          "prompt": "0.0000025",
+          "completion": "0.0000125",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "anthropic/claude-opus-5",
+      "permaslug": "anthropic/claude-opus-5-20260723",
+      "name": "Claude Opus 5",
+      "short_name": "Claude Opus 5",
+      "author_display_name": "Anthropic",
+      "endpoint": {
+        "model_variant_slug": "anthropic/claude-opus-5",
+        "variant": "standard",
+        "provider_name": "Claude Platform on AWS",
+        "pricing": {
+          "prompt": "0.000005",
+          "completion": "0.000025",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5.2",
+      "permaslug": "z-ai/glm-5.2-20260616",
+      "name": "Z.ai: GLM 5.2 (free)",
+      "short_name": "GLM 5.2 (free)",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5.2:free",
+        "variant": "free",
+        "provider_name": "Decart",
+        "pricing": {
+          "prompt": "0",
+          "completion": "0",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5.2",
+      "permaslug": "z-ai/glm-5.2-20260616",
+      "name": "Z.ai: GLM 5.2",
+      "short_name": "GLM 5.2",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5.2",
+        "variant": "standard",
+        "provider_name": "StreamLake",
+        "pricing": {
+          "prompt": "0.000000336",
+          "completion": "0.000001056",
+          "discount": 0.76
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5.2",
+      "permaslug": "z-ai/glm-5.2-20260616",
+      "name": "Z.ai: GLM 5.2 (batch)",
+      "short_name": "GLM 5.2 (batch)",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5.2:batch",
+        "variant": "batch",
+        "provider_name": "Together",
+        "pricing": {
+          "prompt": "0.0000014",
+          "completion": "0.0000044",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "moonshotai/kimi-k2.7-code",
+      "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+      "name": "MoonshotAI: Kimi K2.7 Code",
+      "short_name": "Kimi K2.7 Code",
+      "author_display_name": "moonshotai",
+      "endpoint": {
+        "model_variant_slug": "moonshotai/kimi-k2.7-code",
+        "variant": "standard",
+        "provider_name": "Inceptron",
+        "pricing": {
+          "prompt": "0.00000067",
+          "completion": "0.0000034",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "moonshotai/kimi-k2.7-code",
+      "permaslug": "moonshotai/kimi-k2.7-code-20260612",
+      "name": "MoonshotAI: Kimi K2.7 Code (batch)",
+      "short_name": "Kimi K2.7 Code (batch)",
+      "author_display_name": "moonshotai",
+      "endpoint": {
+        "model_variant_slug": "moonshotai/kimi-k2.7-code:batch",
+        "variant": "batch",
+        "provider_name": "Together",
+        "pricing": {
+          "prompt": "0.00000095",
+          "completion": "0.000004",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "deepseek/deepseek-v4-pro",
+      "permaslug": "deepseek/deepseek-v4-pro-20260423",
+      "name": "DeepSeek: DeepSeek V4 Pro 0423",
+      "short_name": "DeepSeek V4 Pro 0423",
+      "author_display_name": "DeepSeek",
+      "endpoint": {
+        "model_variant_slug": "deepseek/deepseek-v4-pro",
+        "variant": "standard",
+        "provider_name": "StreamLake",
+        "pricing": {
+          "prompt": "0.000000396894",
+          "completion": "0.000000793788",
+          "discount": 0.7719
+        }
+      }
+    },
+    {
+      "slug": "deepseek/deepseek-v4-flash",
+      "permaslug": "deepseek/deepseek-v4-flash-20260423",
+      "name": "DeepSeek: DeepSeek V4 Flash 0423",
+      "short_name": "DeepSeek V4 Flash 0423",
+      "author_display_name": "DeepSeek",
+      "endpoint": {
+        "model_variant_slug": "deepseek/deepseek-v4-flash",
+        "variant": "standard",
+        "provider_name": "StreamLake",
+        "pricing": {
+          "prompt": "0.00000004886",
+          "completion": "0.00000009772",
+          "discount": 0.651
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5.1",
+      "permaslug": "z-ai/glm-5.1-20260406",
+      "name": "Z.ai: GLM 5.1",
+      "short_name": "GLM 5.1",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5.1",
+        "variant": "standard",
+        "provider_name": "Baidu",
+        "pricing": {
+          "prompt": "0.000000896",
+          "completion": "0.000002816",
+          "discount": 0.36
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5v-turbo",
+      "permaslug": "z-ai/glm-5v-turbo-20260401",
+      "name": "Z.ai: GLM 5V Turbo",
+      "short_name": "GLM 5V Turbo",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5v-turbo",
+        "variant": "standard",
+        "provider_name": "Z.AI",
+        "pricing": {
+          "prompt": "0.0000012",
+          "completion": "0.000004",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5-turbo",
+      "permaslug": "z-ai/glm-5-turbo-20260315",
+      "name": "Z.ai: GLM 5 Turbo",
+      "short_name": "GLM 5 Turbo",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5-turbo",
+        "variant": "standard",
+        "provider_name": "Z.AI",
+        "pricing": {
+          "prompt": "0.0000012",
+          "completion": "0.000004",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-5",
+      "permaslug": "z-ai/glm-5-20260211",
+      "name": "Z.ai: GLM 5",
+      "short_name": "GLM 5",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-5",
+        "variant": "standard",
+        "provider_name": "GMICloud",
+        "pricing": {
+          "prompt": "0.0000006",
+          "completion": "0.00000192",
+          "discount": 0.4
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-4.7",
+      "permaslug": "z-ai/glm-4.7-20251222",
+      "name": "Z.ai: GLM 4.7",
+      "short_name": "GLM 4.7",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-4.7",
+        "variant": "standard",
+        "provider_name": "DeepInfra",
+        "pricing": {
+          "prompt": "0.0000004",
+          "completion": "0.00000175",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-4.6v",
+      "permaslug": "z-ai/glm-4.6-20251208",
+      "name": "Z.ai: GLM 4.6V",
+      "short_name": "GLM 4.6V",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-4.6v",
+        "variant": "standard",
+        "provider_name": "Novita",
+        "pricing": {
+          "prompt": "0.0000003",
+          "completion": "0.0000009",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-4.6",
+      "permaslug": "z-ai/glm-4.6",
+      "name": "Z.ai: GLM 4.6",
+      "short_name": "GLM 4.6",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-4.6",
+        "variant": "standard",
+        "provider_name": "Venice",
+        "pricing": {
+          "prompt": "0.00000043",
+          "completion": "0.00000175",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-4.5v",
+      "permaslug": "z-ai/glm-4.5v",
+      "name": "Z.ai: GLM 4.5V",
+      "short_name": "GLM 4.5V",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-4.5v",
+        "variant": "standard",
+        "provider_name": "Novita",
+        "pricing": {
+          "prompt": "0.0000006",
+          "completion": "0.0000018",
+          "discount": 0
+        }
+      }
+    },
+    {
+      "slug": "z-ai/glm-4.5",
+      "permaslug": "z-ai/glm-4.5",
+      "name": "Z.ai: GLM 4.5",
+      "short_name": "GLM 4.5",
+      "author_display_name": "Z.ai",
+      "endpoint": {
+        "model_variant_slug": "z-ai/glm-4.5",
+        "variant": "standard",
+        "provider_name": "Z.AI",
+        "pricing": {
+          "prompt": "0.0000006",
+          "completion": "0.0000022",
+          "discount": 0
+        }
+      }
+    }
+  ]
+}

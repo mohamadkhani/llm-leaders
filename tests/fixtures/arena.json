@@ -1,0 +1,112 @@
+{
+  "entries": [
+    {
+      "model_key": "claude-opus-5-max-webdev",
+      "display_name": "claude-opus-5-max",
+      "rating": 1690.6395713997163,
+      "rank": 1
+    },
+    {
+      "model_key": "kivine-wxzc",
+      "display_name": "kimi-k3-max",
+      "rating": 1673.6961333978227,
+      "rank": 2
+    },
+    {
+      "model_key": "kinsley-5jmg",
+      "display_name": "qwen3.8-max",
+      "rating": 1668.9390977471774,
+      "rank": 3
+    },
+    {
+      "model_key": "claude-opus-5-high-webdev",
+      "display_name": "claude-opus-5-high",
+      "rating": 1662.5934919996598,
+      "rank": 4
+    },
+    {
+      "model_key": "glm-5.3",
+      "display_name": "glm-5.3-max",
+      "rating": 1598.6001848847525,
+      "rank": 8
+    },
+    {
+      "model_key": "qwen3.8-27b-code-webdev",
+      "display_name": "qwen3.8-27b",
+      "rating": 1594.7775370883076,
+      "rank": 9
+    },
+    {
+      "model_key": "glm-5.2-code",
+      "display_name": "glm-5.2-max",
+      "rating": 1582.0912797071308,
+      "rank": 11
+    },
+    {
+      "model_key": "deepseek-v4-pro-high-20260813-webdev",
+      "display_name": "deepseek-v4-pro-high-20260813",
+      "rating": 1581.6418400239618,
+      "rank": 12
+    },
+    {
+      "model_key": "deepseek-v4-flash-high-20260730-webdev",
+      "display_name": "deepseek-v4-flash-high",
+      "rating": 1579.0993765147234,
+      "rank": 13
+    },
+    {
+      "model_key": "glm-5.1-code",
+      "display_name": "glm-5.1",
+      "rating": 1508.9259030653723,
+      "rank": 31
+    },
+    {
+      "model_key": "kimi-k2.7-code",
+      "display_name": "kimi-k2.7-code",
+      "rating": 1472.646928867663,
+      "rank": 41
+    },
+    {
+      "model_key": "deepseek-v4-pro-ch1-thinking-webdev",
+      "display_name": "deepseek-v4-pro-high-preview",
+      "rating": 1463.8042124059687,
+      "rank": 43
+    },
+    {
+      "model_key": "deepseek-v4-pro-ch1-webdev",
+      "display_name": "deepseek-v4-pro",
+      "rating": 1445.4554435536177,
+      "rank": 49
+    },
+    {
+      "model_key": "glm-5-webdev",
+      "display_name": "glm-5",
+      "rating": 1435.4584267142257,
+      "rank": 55
+    },
+    {
+      "model_key": "glm-4.7",
+      "display_name": "glm-4.7",
+      "rating": 1434.289758171793,
+      "rank": 56
+    },
+    {
+      "model_key": "deepseek-v4-ch3-thinking-webdev",
+      "display_name": "deepseek-v4-flash-high-preview",
+      "rating": 1431.069014492644,
+      "rank": 58
+    },
+    {
+      "model_key": "glm-5v-turbo",
+      "display_name": "glm-5v-turbo",
+      "rating": 1399.8264781078112,
+      "rank": 65
+    },
+    {
+      "model_key": "glm-4.6",
+      "display_name": "glm-4.6",
+      "rating": 1340.1793713485072,
+      "rank": 90
+    }
+  ]
+}
