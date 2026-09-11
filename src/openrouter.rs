@@ -21,6 +21,27 @@ pub struct Model {
     #[allow(dead_code)]
     pub context_length: Option<u64>,
     pub pricing: Pricing,
+    /// Modalities this model can take and produce, from the v1 API's
+    /// `architecture` object. Absent on older captures, so callers must
+    /// treat it as `None`, not an error. This is the authoritative signal
+    /// for "suitable for coding": a coding model outputs text only, while
+    /// image/video/audio/speech/transcription/embeddings/rerank outputs
+    /// mark a non-coding model.
+    #[serde(default)]
+    pub architecture: Option<Architecture>,
+}
+
+/// Modalities from the v1 API's `architecture` object.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Architecture {
+    /// E.g. "text+image->text+audio". Not used directly — callers want
+    /// the parsed `input_modalities` / `output_modalities`.
+    #[serde(default)]
+    pub modality: Option<String>,
+    #[serde(default)]
+    pub input_modalities: Vec<String>,
+    #[serde(default)]
+    pub output_modalities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -309,6 +330,21 @@ fn fetch_best_prices_uncached(
 }
 
 impl Model {
+    /// Is this model suitable for coding? Uses OpenRouter's own
+    /// `architecture.output_modalities` from the v1 API — the authoritative
+    /// signal. A coding model outputs text only; image/video/audio/speech/
+    /// transcription/embeddings/rerank outputs mark a non-coding model.
+    /// Returns `false` when the field is absent (older captures, v1-only
+    /// runs), so callers must pair it with a fallback of their own — there
+    /// is no hardcoded token list here, because a token that matches a
+    /// coding model's name would drop it.
+    pub fn non_coding(&self) -> bool {
+        match &self.architecture {
+            Some(a) => !a.output_modalities.is_empty() && a.output_modalities != ["text"],
+            None => false,
+        }
+    }
+
     /// Input price in USD per million tokens. `Some(0.0)` for free models,
     /// `None` only when the value is unset/unparseable.
     pub fn input_per_m(&self) -> Option<f64> {
@@ -397,5 +433,60 @@ mod tests {
         // Clock skew must not underflow into "infinitely stale".
         let e = entry(Some(0.5), Some(NOW + HOUR));
         assert!(entry_is_fresh(&e, 0, NOW));
+    }
+
+    fn model(out: &[&str]) -> Model {
+        Model {
+            id: "test/model".to_string(),
+            name: "Test Model".to_string(),
+            canonical_slug: None,
+            description: None,
+            context_length: None,
+            architecture: Some(Architecture {
+                output_modalities: out.iter().map(|s| s.to_string()).collect(),
+                ..Architecture::default()
+            }),
+            pricing: Pricing::default(),
+        }
+    }
+
+    /// A coding model outputs text only — every other output modality
+    /// marks a non-coding model.
+    #[test]
+    fn non_text_output_is_non_coding() {
+        let cases: &[&[&str]] = &[
+            &["image"],
+            &["image", "text"],
+            &["video"],
+            &["text", "audio"],
+            &["speech"],
+            &["transcription"],
+            &["embeddings"],
+            &["rerank"],
+        ];
+        for out in cases {
+            assert!(model(*out).non_coding(), "out={:?} must be non-coding", out);
+        }
+    }
+
+    /// Text-only output is coding, including with image input.
+    #[test]
+    fn text_output_is_coding() {
+        assert!(!model(&["text"]).non_coding(), "text output is coding");
+        let mut m = model(&["text"]);
+        m.architecture.as_mut().unwrap().input_modalities =
+            vec!["text".to_string(), "image".to_string()];
+        assert!(
+            !m.non_coding(),
+            "image input + text output is coding"
+        );
+    }
+
+    /// Absent on older captures — never an error, just None.
+    #[test]
+    fn absent_architecture_is_coding() {
+        let mut m = model(&["text"]);
+        m.architecture = None;
+        assert!(!m.non_coding(), "absent architecture must be coding");
     }
 }

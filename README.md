@@ -18,6 +18,8 @@ Benchmark columns (Web Rank = `models-website`, Code Rank = `models-codecategori
 
 Cache TTLs at a glance: prices 5-min catalog / 1h endpoints (15-min discount check), arena 5h, benchmarks 5h. `--refresh` busts caches selectively.
 
+Non-coding models (image/video generators, music/lyric/audio/speech TTS/STT, embedders, rerankers) are dropped by default — `--include-non-coding` shows them. The signal is OpenRouter's own `architecture.output_modalities` from the v1 API: a coding model outputs text only, while image/video/audio/speech/transcription/embeddings/rerank outputs mark a non-coding model. It is authoritative and catches models a token list would miss (e.g. Lyria, which has `quick_start_example_type: null` but outputs `text+audio`). There is no hardcoded token list: a substring heuristic decays against the catalog and silently drops coding models whose names happen to contain a token (e.g. "Thinking Machines: Inkling", which outputs text).
+
 The terminal table uses heat scales, all computed over the rows actually displayed so they stay meaningful under any filter combination:
 
 - **Model** — value-for-money heat: Elo odds (`10^(Elo/400)` — each +400 Elo counts as 10× quality) per dollar of blended price (input weighted 3 : output 1, log-scaled). Green = best quality-per-dollar in view, red = worst. Free models with a known Elo render **bold pure green** — unbeatable per dollar.
@@ -105,6 +107,10 @@ llm-leaders --list-bench
 
 # drop the default benchmark columns (OR Web, Code) for the 7-column layout
 llm-leaders --no-bench
+
+# show the full catalog including non-coding models (image, video,
+# music, TTS, embedders, rerankers). Default: drop them.
+llm-leaders --include-non-coding
 
 # force-refresh caches: prices (catalog + endpoints), ranks (arena +
 # benchmarks), or all. Bare --refresh means all.

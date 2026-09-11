@@ -259,6 +259,7 @@ mod tests {
             canonical_slug: slug.map(String::from),
             description: None,
             context_length: None,
+            architecture: None,
             pricing: Pricing::default(),
         }
     }

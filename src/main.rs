@@ -101,6 +101,11 @@ struct Cli {
     #[arg(long, global = true)]
     all: bool,
 
+    /// Show the full catalog including non-coding models (image, video,
+    /// music, TTS, embedders, rerankers). Default: drop them.
+    #[arg(long, global = true)]
+    include_non_coding: bool,
+
     /// Force-refresh caches: `prices` (catalog + endpoints), `ranks` (arena +
     /// benchmarks), `all`. Bare `--refresh` means `all` (muscle memory).
     #[arg(long, global = true, num_args = 0..=1, default_missing_value = "all", require_equals = false)]
@@ -164,6 +169,7 @@ fn main() -> Result<()> {
             max_code_rank: cli.max_code_rank,
             max_any_rank: cli.max_any_rank,
             all: cli.all,
+            include_non_coding: cli.include_non_coding,
             refresh: cli
                 .refresh
                 .as_deref()
@@ -223,6 +229,7 @@ struct TableOpts {
     max_code_rank: Option<u64>,
     max_any_rank: Vec<u64>,
     all: bool,
+    include_non_coding: bool,
     refresh: Refresh,
 }
 
@@ -396,6 +403,12 @@ struct Row {
     name: String,
     /// Model's declared context length (tokens), from the OpenRouter catalog.
     ctx: Option<u64>,
+    /// Whether this model is suitable for coding, per OpenRouter's own
+    /// `architecture.output_modalities` from the v1 API. Set once at
+    /// construction; the default filter reads it. False when the field is
+    /// absent (older captures, v1-only runs) — in that case the model is
+    /// shown, since there is no signal to drop it.
+    non_coding: bool,
     input: Option<f64>,
     output: Option<f64>,
     discount: Option<f64>,
@@ -522,6 +535,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                         canonical_slug: None,
                         description: None,
                         context_length: None,
+                        architecture: None,
                         pricing: openrouter::Pricing {
                             prompt: "0".to_string(),
                             completion: "0".to_string(),
@@ -587,6 +601,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 id: model.id.clone(),
                 name: model.name.clone(),
                 ctx: model.context_length,
+                non_coding: model.non_coding(),
                 input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
                 output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
                 discount: best.and_then(|b| b.discount),
@@ -654,6 +669,18 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 || r.web.map_or(false, |s| s.rank <= web_max)
                 || r.code.map_or(false, |s| s.rank <= code_max)
         });
+    }
+    if !opts.include_non_coding {
+        // Drop models that aren't suitable for coding. The only signal is
+        // OpenRouter's own `architecture.output_modalities` from the v1 API —
+        // a coding model outputs text only, while image/video/audio/speech/
+        // transcription/embeddings/rerank outputs mark a non-coding model.
+        // There is no hardcoded token list: a substring heuristic decays
+        // against the catalog and silently drops coding models whose names
+        // happen to contain a token (e.g. "Thinking Machines: Inkling").
+        // When the field is absent (older captures, v1-only runs) the model
+        // is shown — there is no signal to drop it.
+        rows.retain(|r| !r.non_coding);
     }
     let dropped = before - rows.len();
 
