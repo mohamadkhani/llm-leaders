@@ -2,7 +2,9 @@ use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
 use comfy_table::{ContentArrangement, Table};
 
-use llm_leaders::{arena, matcher, models_list, openrouter, or_bench, or_catalog};
+use llm_leaders::{
+    arena, benchlm, benchmark_list, matcher, models_list, openrouter, or_bench, or_catalog,
+};
 
 #[derive(Parser)]
 #[command(name = "llm-leaders", about = "List coding LLMs: OpenRouter prices + arena WebDev rank")]
@@ -16,9 +18,9 @@ struct Cli {
 
     /// Sort column: code-rank (default, asc), arena-rank (asc), elo (desc),
     /// input (input $/M asc), output (output $/M asc), name (asc), ctx
-    /// (context length desc), or web-score / code-score / bench (benchmark
-    /// score desc). "price" is an alias for "input"; old keys rank, or-web,
-    /// code still work.
+    /// (context length desc), or web-score / code-score / bench / capability /
+    /// benchlm (benchmark score desc). "price" is an alias for "input"; old
+    /// keys rank, or-web, code still work.
     #[arg(long, global = true, default_value = "code-rank")]
     sort: String,
 
@@ -90,11 +92,17 @@ struct Cli {
     max_code_rank: Option<u64>,
 
     /// Keep models ranking within the threshold in ANY rank column (OR):
-    /// Arena #, OR Web, Code — a model matching even one threshold is kept.
-    /// One value applies the same threshold to all three; three values set
-    /// per-column thresholds (arena web code). Models missing all three
-    /// ranks are dropped.
-    #[arg(long, global = true, num_args = 1..=3, value_names = ["ARENA", "WEB", "CODE"])]
+    /// Arena, Web, Code, Cap, BLM — a model matching even one threshold is
+    /// kept. One value applies to all five; five values set per-column
+    /// thresholds (arena web code cap benchlm). Three- and four-value forms
+    /// remain as legacy fallbacks and leave later columns unfiltered. Models
+    /// missing every applicable rank are dropped.
+    #[arg(
+        long,
+        global = true,
+        num_args = 1..=5,
+        value_names = ["ARENA", "WEB", "CODE", "CAP", "BLM"]
+    )]
     max_any_rank: Vec<u64>,
 
     /// Show the full OpenRouter catalog instead of your curated models.txt list.
@@ -107,7 +115,8 @@ struct Cli {
     include_non_coding: bool,
 
     /// Force-refresh caches: `prices` (catalog + endpoints), `ranks` (arena +
-    /// benchmarks), `all`. Bare `--refresh` means `all` (muscle memory).
+    /// benchmarks + capability + BenchLM), `all`. Bare `--refresh` means
+    /// `all` (muscle memory).
     #[arg(long, global = true, num_args = 0..=1, default_missing_value = "all", require_equals = false)]
     refresh: Option<String>,
 }
@@ -420,15 +429,20 @@ struct Row {
     web: Option<or_bench::Standing>,
     code: Option<or_bench::Standing>,
     extra: Option<or_bench::Standing>,
+    capability: Option<benchmark_list::CapabilityStanding>,
+    benchlm: Option<benchlm::BenchLmStanding>,
 }
 
 /// Which benchmark columns to render, with each category's total coverage for
 /// the header ("OR Web/150") — a #1 of 9 in a sparse category must not read
 /// as #1 of 150. `None` = column hidden.
 struct BenchCols {
+    arena: usize,
     web: Option<usize>,
     code: Option<usize>,
     extra: Option<(String, usize)>,
+    capability: Option<usize>,
+    benchlm: Option<usize>,
 }
 
 impl BenchCols {
@@ -443,20 +457,105 @@ impl BenchCols {
     }
 }
 
-/// Cell text for a benchmark standing: `1372 (#1)`, or `—`.
+/// Cell text for a benchmark standing: terminal shows `1`, Markdown shows
+/// `#1`. Scores stay available for sorting, filters, and heat colors, but the
+/// table shows only the rank.
 fn fmt_bench(s: Option<or_bench::Standing>) -> String {
-    match s {
-        Some(s) => format!("{} (#{})", trim_score(s.score), s.rank),
-        None => "—".to_string(),
-    }
+    fmt_rank(s.map(|s| s.rank))
 }
 
-/// Benchmark scores are whole numbers; drop the trailing ".0".
-fn trim_score(v: f64) -> String {
-    if (v - v.round()).abs() < f64::EPSILON {
-        format!("{}", v.round() as i64)
-    } else {
-        format!("{v}")
+fn fmt_bench_markdown(s: Option<or_bench::Standing>) -> String {
+    fmt_rank_markdown(s.map(|s| s.rank))
+}
+
+fn fmt_capability(capability: Option<&benchmark_list::CapabilityStanding>) -> String {
+    fmt_rank(capability.map(|capability| capability.standing.rank))
+}
+
+fn fmt_capability_markdown(capability: Option<&benchmark_list::CapabilityStanding>) -> String {
+    fmt_rank_markdown(capability.map(|capability| capability.standing.rank))
+}
+
+fn fmt_coverage(capability: Option<&benchmark_list::CapabilityStanding>) -> String {
+    capability
+        .and_then(|capability| capability.coverage)
+        .map(|coverage| coverage.to_string())
+        .unwrap_or_else(|| "—".to_string())
+}
+
+fn fmt_benchlm(standing: Option<&benchlm::BenchLmStanding>) -> String {
+    fmt_rank(standing.map(|standing| standing.rank))
+}
+
+fn fmt_benchlm_markdown(standing: Option<&benchlm::BenchLmStanding>) -> String {
+    fmt_rank_markdown(standing.map(|standing| standing.rank))
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AnyRankThresholds {
+    arena: u64,
+    web: u64,
+    code: u64,
+    capability: Option<u64>,
+    benchlm: Option<u64>,
+}
+
+fn parse_any_rank_thresholds(values: &[u64]) -> Result<AnyRankThresholds> {
+    let thresholds = match values {
+        [all] => AnyRankThresholds {
+            arena: *all,
+            web: *all,
+            code: *all,
+            capability: Some(*all),
+            benchlm: Some(*all),
+        },
+        [arena, web, code] => AnyRankThresholds {
+            arena: *arena,
+            web: *web,
+            code: *code,
+            capability: None,
+            benchlm: None,
+        },
+        [arena, web, code, capability] => AnyRankThresholds {
+            arena: *arena,
+            web: *web,
+            code: *code,
+            capability: Some(*capability),
+            benchlm: None,
+        },
+        [arena, web, code, capability, benchlm] => AnyRankThresholds {
+            arena: *arena,
+            web: *web,
+            code: *code,
+            capability: Some(*capability),
+            benchlm: Some(*benchlm),
+        },
+        _ => bail!(
+            "--max-any-rank takes one threshold, three or four legacy \
+             thresholds (arena web code [cap]), or five thresholds \
+             (arena web code cap benchlm)"
+        ),
+    };
+    Ok(thresholds)
+}
+
+fn rank_within_threshold(rank: Option<u64>, max: Option<u64>) -> bool {
+    matches!((rank, max), (Some(rank), Some(max)) if rank <= max)
+}
+
+impl AnyRankThresholds {
+    fn matches(&self, row: &Row) -> bool {
+        row.rank.is_some_and(|rank| rank <= self.arena)
+            || rank_within_threshold(row.web.map(|s| s.rank), Some(self.web))
+            || rank_within_threshold(row.code.map(|s| s.rank), Some(self.code))
+            || rank_within_threshold(
+                row.capability.as_ref().map(|c| c.standing.rank),
+                self.capability,
+            )
+            || rank_within_threshold(
+                row.benchlm.as_ref().map(|s| s.rank),
+                self.benchlm,
+            )
     }
 }
 
@@ -575,13 +674,27 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         }
         _ => None,
     };
-    let cols = BenchCols {
+    let mut cols = BenchCols {
+        arena: scores.len(),
         web: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_WEBSITE))),
         code: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_CODE))),
         extra: extra_cat.clone().map(|c| {
             let n = bench.as_ref().map_or(0, |b| b.coverage(&c));
             (c, n)
         }),
+        capability: None,
+        benchlm: None,
+    };
+
+    let capability = if opts.no_bench {
+        None
+    } else {
+        benchmark_list::get(opts.refresh.ranks)
+    };
+    let benchlm = if opts.no_bench {
+        None
+    } else {
+        benchlm::get(opts.refresh.ranks)
     };
 
     let mut rows: Vec<Row> = models
@@ -594,6 +707,19 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             let standing = |cat: &Option<String>| -> Option<or_bench::Standing> {
                 bench.as_ref()?.standing(cat.as_deref()?, &model.id)
             };
+            let web = bench
+                .as_ref()
+                .and_then(|b| b.standing(or_bench::CAT_WEBSITE, &model.id));
+            let code = bench
+                .as_ref()
+                .and_then(|b| b.standing(or_bench::CAT_CODE, &model.id));
+            let extra = standing(&extra_cat);
+            let capability = capability
+                .as_ref()
+                .and_then(|list| list.standing(&model.id, &model.name));
+            let benchlm = benchlm
+                .as_ref()
+                .and_then(|list| list.standing(&model.id, &model.name));
             // Prefer cheapest-provider pricing when we have it; fall back to
             // the catalog's default-endpoint price.
             let best = best_prices.get(&model.id);
@@ -607,9 +733,11 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 discount: best.and_then(|b| b.discount),
                 rank,
                 elo,
-                web: bench.as_ref().and_then(|b| b.standing(or_bench::CAT_WEBSITE, &model.id)),
-                code: bench.as_ref().and_then(|b| b.standing(or_bench::CAT_CODE, &model.id)),
-                extra: standing(&extra_cat),
+                web,
+                code,
+                extra,
+                capability,
+                benchlm,
             }
         })
         .collect();
@@ -658,17 +786,8 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         rows.retain(|r| r.code.map_or(false, |s| s.rank <= max));
     }
     if !opts.max_any_rank.is_empty() {
-        let (arena_max, web_max, code_max) = match opts.max_any_rank.as_slice() {
-            [a] => (*a, *a, *a),
-            [a, w, c] => (*a, *w, *c),
-            _ => bail!("--max-any-rank takes one threshold or three (arena web code)"),
-        };
-        // OR semantics: matching any one column's threshold keeps the model.
-        rows.retain(|r| {
-            r.rank.map_or(false, |rk| rk <= arena_max)
-                || r.web.map_or(false, |s| s.rank <= web_max)
-                || r.code.map_or(false, |s| s.rank <= code_max)
-        });
+        let thresholds = parse_any_rank_thresholds(&opts.max_any_rank)?;
+        rows.retain(|r| thresholds.matches(r));
     }
     if !opts.include_non_coding {
         // Drop models that aren't suitable for coding. The only signal is
@@ -683,6 +802,13 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         rows.retain(|r| !r.non_coding);
     }
     let dropped = before - rows.len();
+
+    if capability.as_ref().is_some_and(|list| !list.is_empty()) {
+        cols.capability = Some(capability.as_ref().map_or(0, benchmark_list::BenchmarkList::len));
+    }
+    if benchlm.as_ref().is_some_and(|list| !list.is_empty()) {
+        cols.benchlm = Some(benchlm.as_ref().map_or(0, benchlm::BenchLm::len));
+    }
 
     // Benchmark sorts: desc, higher score is better, missing last. The three
     // keys pick the column; `bench` follows the active column (--bench's
@@ -744,7 +870,19 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         "web-score" | "or-web" => bench_score(&mut rows, &|r| r.web),
         "code-score" | "code" => bench_score(&mut rows, &|r| r.code),
         "bench" => bench_score(&mut rows, &cols.active()),
-        other => bail!("invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|ctx|web-score|code-score|bench)"),
+        "capability" => bench_score(&mut rows, &|r| r.capability.as_ref().map(|c| c.standing)),
+        "benchlm" => rows.sort_by(|a, b| {
+            let rank = |row: &Row| row.benchlm.as_ref().map_or(u64::MAX, |s| s.rank);
+            let score =
+                |row: &Row| row.benchlm.as_ref().map_or(f64::MIN, |s| s.score);
+            rank(a).cmp(&rank(b)).then_with(|| {
+                score(b).partial_cmp(&score(a)).unwrap_or(std::cmp::Ordering::Equal)
+            })
+        }),
+        other => bail!(
+            "invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|ctx|\
+             web-score|code-score|bench|capability|benchlm)"
+        ),
     }
 
     if opts.markdown {
@@ -778,14 +916,14 @@ fn fmt_ctx(v: Option<u64>) -> String {
 
 fn fmt_rank(r: Option<u64>) -> String {
     match r {
-        Some(n) => format!("#{n}"),
+        Some(n) => n.to_string(),
         None => "—".to_string(),
     }
 }
 
-fn fmt_elo(r: Option<f64>) -> String {
+fn fmt_rank_markdown(r: Option<u64>) -> String {
     match r {
-        Some(e) => format!("{:.0}", e),
+        Some(n) => format!("#{n}"),
         None => "—".to_string(),
     }
 }
@@ -854,18 +992,6 @@ fn rank_heat(rank: Option<u64>, min: u64, max: u64) -> comfy_table::Color {
         // No spread (single ranked row, or unranked): leave plain.
         _ => return comfy_table::Color::Reset,
     };
-    heat_rgb(t)
-}
-
-/// Elo heat: highest Elo in view = green, lowest = red. Same degenerate
-/// rules as the other scales.
-fn elo_heat(elo: Option<f64>, min: f64, max: f64) -> comfy_table::Color {
-    let e = match elo {
-        Some(e) if max > min => e,
-        _ => return comfy_table::Color::Reset,
-    };
-    // Higher Elo = greener; invert t so 0 -> green.
-    let t = 1.0 - ((e - min) / (max - min)).clamp(0.0, 1.0);
     heat_rgb(t)
 }
 
@@ -941,30 +1067,60 @@ fn styled_cell(text: String, color: comfy_table::Color, bold: bool) -> comfy_tab
     cell
 }
 
+fn count_header(label: &str, count: usize, separator: &str) -> String {
+    format!("{label}{separator}{count}")
+}
+
 fn print_table(rows: &[Row], cols: &BenchCols) {
     use comfy_table::presets::UTF8_FULL_CONDENSED;
     let mut t = Table::new();
     t.load_preset(UTF8_FULL_CONDENSED)
-        .set_content_arrangement(ContentArrangement::Disabled)
+        .set_content_arrangement(ContentArrangement::Dynamic)
         // Emit ANSI styles even when stdout isn't a TTY (e.g. piped to less -R).
         .enforce_styling();
     // Code rank leads the table (primary sort); Arena # moved to the tail.
     let mut header: Vec<comfy_table::Cell> = Vec::new();
     if let Some(n) = cols.code {
-        header.push(styled_cell(format!("Code Rank/{n}"), comfy_table::Color::Reset, true));
+        header.push(styled_cell(count_header("Code", n, "\n"), comfy_table::Color::Reset, true));
     }
     header.extend(
-        ["Model", "Ctx", "In $/M", "Out $/M", "Disc", "Elo"]
+        ["Model", "Ctx", "In", "Out", "Disc"]
             .iter()
             .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
     );
     if let Some(n) = cols.web {
-        header.push(styled_cell(format!("Web Rank/{n}"), comfy_table::Color::Reset, true));
+        header.push(styled_cell(count_header("Web", n, "\n"), comfy_table::Color::Reset, true));
     }
     if let Some((cat, n)) = &cols.extra {
-        header.push(styled_cell(format!("{cat}/{n}"), comfy_table::Color::Reset, true));
+        let title = cat.strip_prefix("models-").unwrap_or(cat);
+        header.push(styled_cell(
+            count_header(title, *n, "\n"),
+            comfy_table::Color::Reset,
+            true,
+        ));
     }
-    header.push(styled_cell("Arena Rank".to_string(), comfy_table::Color::Reset, true));
+    header.push(styled_cell(
+        count_header("Arena", cols.arena, "\n"),
+        comfy_table::Color::Reset,
+        true,
+    ));
+    if let Some(n) = cols.capability {
+        header.push(styled_cell(
+            count_header("Cap", n, "\n"),
+            comfy_table::Color::Reset,
+            true,
+        ));
+    }
+    if let Some(n) = cols.benchlm {
+        header.push(styled_cell(
+            count_header("BLM", n, "\n"),
+            comfy_table::Color::Reset,
+            true,
+        ));
+    }
+    if cols.capability.is_some() {
+        header.push(styled_cell("Cov".to_string(), comfy_table::Color::Reset, true));
+    }
     header.push(styled_cell("ID".to_string(), comfy_table::Color::Reset, true));
     t.set_header(header);
     // Price-heat scale over the visible rows (after filtering).
@@ -984,12 +1140,6 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         ranks.iter().cloned().min().unwrap_or(0),
         ranks.iter().cloned().max().unwrap_or(0),
     );
-    // Elo-heat scale over the visible elos.
-    let elos: Vec<f64> = rows.iter().filter_map(|r| r.elo).collect();
-    let (elo_min, elo_max) = (
-        elos.iter().cloned().fold(f64::INFINITY, f64::min),
-        elos.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
-    );
     // Context-window heat: largest window in view = green, smallest = red.
     let ctxs: Vec<u64> = rows.iter().filter_map(|r| r.ctx).collect();
     let (ctx_min, ctx_max) = (
@@ -1008,6 +1158,19 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     let (web_min, web_max) = score_scale(&|r: &Row| r.web);
     let (code_min, code_max) = score_scale(&|r: &Row| r.code);
     let (extra_min, extra_max) = score_scale(&|r: &Row| r.extra);
+    let (capability_min, capability_max) =
+        score_scale(&|r: &Row| r.capability.as_ref().map(|c| c.standing));
+    let benchlm_scores: Vec<f64> = rows
+        .iter()
+        .filter_map(|r| r.benchlm.as_ref().map(|s| s.score))
+        .collect();
+    let (benchlm_min, benchlm_max) = (
+        benchlm_scores.iter().cloned().fold(f64::INFINITY, f64::min),
+        benchlm_scores
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max),
+    );
     // Value-for-money scale over the visible rows. Blended price weights
     // input 3 : output 1 (typical coding-agent traffic); value = elo-odds /
     // price where odds = 10^(elo/400). Free models are excluded.
@@ -1034,12 +1197,12 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         // Free prices ($0) get bold pure green — unbeatable per dollar,
         // same treatment as the free discount label. Paid rows keep the
         // red→green heat scale.
-        let price_style = |p: Option<f64>| -> (comfy_table::Color, bool) {
+        let price_style = |p: Option<f64>, min: f64, max: f64| -> (comfy_table::Color, bool) {
             if p.map_or(false, |v| v <= 0.0) {
                 (comfy_table::Color::Rgb { r: 0, g: 255, b: 0 }, true)
             } else {
                 (
-                    price_heat(p, in_min, in_max).unwrap_or(comfy_table::Color::Reset),
+                    price_heat(p, min, max).unwrap_or(comfy_table::Color::Reset),
                     false,
                 )
             }
@@ -1062,11 +1225,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 styled_cell(fmt_ctx(r.ctx), c, b)
             },
             {
-                let (c, b) = price_style(r.input);
+                let (c, b) = price_style(r.input, in_min, in_max);
                 styled_cell(fmt_price(r.input), c, b)
             },
             {
-                let (c, b) = price_style(r.output);
+                let (c, b) = price_style(r.output, out_min, out_max);
                 styled_cell(fmt_price(r.output), c, b)
             },
             styled_cell(
@@ -1083,7 +1246,6 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 r.input.map_or(false, |p| p <= 0.0)
                     || r.discount.map_or(false, |d| d >= 0.30),
             ),
-            styled_cell(fmt_elo(r.elo), elo_heat(r.elo, elo_min, elo_max), false),
         ]);
         if cols.web.is_some() {
             cells.push(styled_cell(
@@ -1100,6 +1262,35 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
             ));
         }
         cells.push(styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false));
+        if cols.capability.is_some() {
+            cells.push(styled_cell(
+                fmt_capability(r.capability.as_ref()),
+                score_heat(
+                    r.capability.as_ref().map(|c| c.standing.score),
+                    capability_min,
+                    capability_max,
+                ),
+                false,
+            ));
+        }
+        if cols.benchlm.is_some() {
+            cells.push(styled_cell(
+                fmt_benchlm(r.benchlm.as_ref()),
+                score_heat(
+                    r.benchlm.as_ref().map(|s| s.score),
+                    benchlm_min,
+                    benchlm_max,
+                ),
+                false,
+            ));
+        }
+        if cols.capability.is_some() {
+            cells.push(styled_cell(
+                fmt_coverage(r.capability.as_ref()),
+                comfy_table::Color::Reset,
+                false,
+            ));
+        }
         cells.push(styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false));
         t.add_row(cells);
     }
@@ -1144,21 +1335,34 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
     let mut head: Vec<String> = Vec::new();
     let mut sep: Vec<&str> = Vec::new();
     if let Some(n) = cols.code {
-        head.push(format!("Code Rank/{n}"));
+        head.push(count_header("Code", n, "<br>"));
         sep.push("---:");
     }
-    head.extend(["Model", "Ctx", "In $/M", "Out $/M", "Disc", "Elo"].map(String::from));
-    sep.extend(["---", "---:", "---:", "---:", "---:", "---:"]);
+    head.extend(["Model", "Ctx", "In", "Out", "Disc"].map(String::from));
+    sep.extend(["---", "---:", "---:", "---:", "---:"]);
     if let Some(n) = cols.web {
-        head.push(format!("Web Rank/{n}"));
+        head.push(count_header("Web", n, "<br>"));
         sep.push("---:");
     }
     if let Some((cat, n)) = &cols.extra {
-        head.push(format!("{cat}/{n}"));
+        let title = cat.strip_prefix("models-").unwrap_or(cat);
+        head.push(count_header(title, *n, "<br>"));
         sep.push("---:");
     }
-    head.push("Arena Rank".to_string());
+    head.push(count_header("Arena", cols.arena, "<br>"));
     sep.push("---:");
+    if let Some(n) = cols.capability {
+        head.push(count_header("Cap", n, "<br>"));
+        sep.push("---:");
+    }
+    if let Some(n) = cols.benchlm {
+        head.push(count_header("BLM", n, "<br>"));
+        sep.push("---:");
+    }
+    if cols.capability.is_some() {
+        head.push("Cov".to_string());
+        sep.push("---:");
+    }
     head.push("ID".to_string());
     sep.push("---");
     println!("| {} |", head.join(" | "));
@@ -1166,22 +1370,90 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
     for r in rows {
         let mut cells: Vec<String> = Vec::new();
         if cols.code.is_some() {
-            cells.push(fmt_bench(r.code));
+            cells.push(fmt_bench_markdown(r.code));
         }
         cells.push(r.name.clone());
         cells.push(fmt_ctx(r.ctx));
         cells.push(fmt_price(r.input));
         cells.push(fmt_price(r.output));
         cells.push(fmt_discount(r.discount, r.input));
-        cells.push(fmt_elo(r.elo));
         if cols.web.is_some() {
-            cells.push(fmt_bench(r.web));
+            cells.push(fmt_bench_markdown(r.web));
         }
         if cols.extra.is_some() {
-            cells.push(fmt_bench(r.extra));
+            cells.push(fmt_bench_markdown(r.extra));
         }
-        cells.push(fmt_rank(r.rank));
+        cells.push(fmt_rank_markdown(r.rank));
+        if cols.capability.is_some() {
+            cells.push(fmt_capability_markdown(r.capability.as_ref()));
+        }
+        if cols.benchlm.is_some() {
+            cells.push(fmt_benchlm_markdown(r.benchlm.as_ref()));
+        }
+        if cols.capability.is_some() {
+            cells.push(fmt_coverage(r.capability.as_ref()));
+        }
         cells.push(format!("`{}`", r.id));
         println!("| {} |", cells.join(" | "));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn row(arena: Option<u64>, benchlm: Option<(f64, u64)>) -> Row {
+        Row {
+            id: String::new(),
+            name: String::new(),
+            ctx: None,
+            non_coding: false,
+            input: None,
+            output: None,
+            discount: None,
+            rank: arena,
+            elo: None,
+            web: None,
+            code: None,
+            extra: None,
+            capability: None,
+            benchlm: benchlm.map(|(score, rank)| benchlm::BenchLmStanding { score, rank }),
+        }
+    }
+
+    #[test]
+    fn one_any_rank_threshold_applies_to_all_sources() {
+        let thresholds = parse_any_rank_thresholds(&[20]).expect("thresholds");
+        assert!(thresholds.matches(&row(None, Some((80.0, 10)))));
+        assert!(!thresholds.matches(&row(None, Some((80.0, 21)))));
+    }
+
+    #[test]
+    fn five_any_rank_thresholds_are_per_column() {
+        let thresholds =
+            parse_any_rank_thresholds(&[1, 2, 3, 4, 5]).expect("thresholds");
+        assert_eq!(
+            thresholds,
+            AnyRankThresholds {
+                arena: 1,
+                web: 2,
+                code: 3,
+                capability: Some(4),
+                benchlm: Some(5),
+            }
+        );
+        assert!(thresholds.matches(&row(None, Some((80.0, 5)))));
+        assert!(!thresholds.matches(&row(None, Some((80.0, 6)))));
+    }
+
+    #[test]
+    fn legacy_any_rank_forms_leave_newer_columns_unfiltered() {
+        let three = parse_any_rank_thresholds(&[10, 20, 30]).expect("thresholds");
+        assert_eq!(three.capability, None);
+        assert_eq!(three.benchlm, None);
+
+        let four = parse_any_rank_thresholds(&[10, 20, 30, 40]).expect("thresholds");
+        assert_eq!(four.capability, Some(40));
+        assert_eq!(four.benchlm, None);
     }
 }

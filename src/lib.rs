@@ -3,6 +3,8 @@
 //! tested against fixtures without re-declaring the module tree.
 
 pub mod arena;
+pub mod benchmark_list;
+pub mod benchlm;
 pub mod identity;
 pub mod matcher;
 pub mod models_list;
