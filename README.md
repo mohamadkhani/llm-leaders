@@ -169,16 +169,32 @@ Install from AUR:
 yay -S llm-leaders-bin
 ```
 
-### Ubuntu / Debian (.deb)
+### Ubuntu / Debian (APT Repository)
 
-Download the latest `.deb` from the [Releases](https://github.com/mohamadkhani/llm-leaders/releases) page:
+Install and update directly using `apt`:
 
 ```sh
-# Install using apt (automatically handles dependencies):
-sudo apt install ./llm-leaders_<version>_amd64.deb
+# 1. Add repository GPG key
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://mohamadkhani.github.io/llm-leaders/KEY.gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/llm-leaders.gpg
 
-# Or with dpkg:
-sudo dpkg -i llm-leaders_<version>_amd64.deb
+# 2. Add repository source
+echo "deb [signed-by=/etc/apt/keyrings/llm-leaders.gpg] https://mohamadkhani.github.io/llm-leaders/ ./" | sudo tee /etc/apt/sources.list.d/llm-leaders.list
+
+# 3. Update and install
+sudo apt update
+sudo apt install llm-leaders
+```
+
+To update `llm-leaders` in the future:
+```sh
+sudo apt update && sudo apt upgrade
+```
+
+#### Manual `.deb` download
+Alternatively, download the `.deb` file directly from [GitHub Releases](https://github.com/mohamadkhani/llm-leaders/releases):
+```sh
+sudo apt install ./llm-leaders_<version>_amd64.deb
 ```
 
 To build the `.deb` package locally:

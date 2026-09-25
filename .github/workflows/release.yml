@@ -16,7 +16,7 @@ jobs:
       - name: Install build deps
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git upx tar openssh docker dpkg
+          pacman -S --noconfirm base-devel git upx tar openssh docker dpkg gnupg
 
       - uses: actions/checkout@v4
 
@@ -90,3 +90,13 @@ jobs:
           VERSION: ${{ steps.tar.outputs.version }}
           TARBALL: ${{ steps.tar.outputs.tarball }}
         run: packaging/arch/publish-aur.sh
+
+      # ----------------------------------------------------------- publish APT repo
+      - name: Publish APT repository (GitHub Pages)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.tar.outputs.version }}
+          DEB_PACKAGE: ${{ steps.deb.outputs.deb }}
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: packaging/debian/publish-apt.sh
