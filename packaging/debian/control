@@ -1,0 +1,11 @@
+Package: llm-leaders
+Version: PLACEHOLDER
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Mohammadreza Khani <mohamadkhani14@gmail.com>
+Homepage: https://github.com/mohamadkhani/llm-leaders
+Depends: libc6 (>= 2.31), libssl3 (>= 3.0.0) | libssl1.1, zlib1g (>= 1:1.1.4)
+Description: Terminal tool ranking coding LLMs by arena.ai WebDev Elo with live OpenRouter pricing
+ A CLI that lists coding LLMs with their OpenRouter prices and arena.ai
+ WebDev Elo score, side by side.

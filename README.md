@@ -151,16 +151,38 @@ cargo build --release
 # binary at target/release/llm-leaders
 ```
 
-## Packaging (Arch / AUR)
+## Packaging & Installation
 
-A tagged push (`git tag v0.1.0 && git push --tags`) triggers [.gitea/workflows/release.yml](.gitea/workflows/release.yml), which runs in an `archlinux:latest` container and:
+A tagged push (`git tag v0.1.0 && git push --tags`) triggers [.github/workflows/release.yml](.github/workflows/release.yml), which:
 
 1. builds the release binary and UPX-compresses it,
 2. packs `llm-leaders-<ver>-x86_64-unknown-linux-gnu.tar.gz` (binary + LICENSE),
-3. lints the package plan with `namcap`,
-4. publishes a GitHub/Gitea Release, and
-5. updates the `llm-leaders-bin` AUR package — [packaging/arch/PKGBUILD](packaging/arch/PKGBUILD) is the canonical source; [packaging/arch/publish-aur.sh](packaging/arch/publish-aur.sh) clones AUR, injects the tarball's real `b2sum`, regenerates `.SRCINFO`, and pushes over SSH.
+3. builds a Debian / Ubuntu `.deb` package (`llm-leaders_<ver>_amd64.deb`),
+4. lints the Arch package plan with `namcap`,
+5. publishes a GitHub Release with both the tarball and `.deb` package, and
+6. updates the `llm-leaders-bin` AUR package — [packaging/arch/PKGBUILD](packaging/arch/PKGBUILD) is the canonical source; [packaging/arch/publish-aur.sh](packaging/arch/publish-aur.sh) clones AUR, injects the tarball's real `b2sum`, regenerates `.SRCINFO`, and pushes over SSH.
 
-The AUR push authenticates with an SSH key registered to your AUR account, stored as the `AUR_SSH_PRIVATE_KEY` action secret. That key is account-wide (AUR has no per-package deploy keys), so treat it as a credential.
+### Arch Linux (AUR)
 
-Install from AUR: `yay -S llm-leaders-bin`.
+Install from AUR:
+```sh
+yay -S llm-leaders-bin
+```
+
+### Ubuntu / Debian (.deb)
+
+Download the latest `.deb` from the [Releases](https://github.com/mohamadkhani/llm-leaders/releases) page:
+
+```sh
+# Install using apt (automatically handles dependencies):
+sudo apt install ./llm-leaders_<version>_amd64.deb
+
+# Or with dpkg:
+sudo dpkg -i llm-leaders_<version>_amd64.deb
+```
+
+To build the `.deb` package locally:
+```sh
+cargo build --release
+packaging/debian/build-deb.sh <version>
+```

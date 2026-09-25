@@ -3,6 +3,23 @@ name = "llm-leaders"
 version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
+description = "Terminal tool ranking coding LLMs by arena.ai WebDev Elo with live OpenRouter pricing"
+repository = "https://github.com/mohamadkhani/llm-leaders"
+
+[package.metadata.deb]
+maintainer = "Mohammadreza Khani <mohamadkhani14@gmail.com>"
+copyright = "2025 Mohammadreza Khani"
+license-file = ["COPYING", "4"]
+extended-description = """\
+Terminal tool ranking coding LLMs by arena.ai WebDev Elo with live OpenRouter pricing."""
+section = "utils"
+priority = "optional"
+depends = "libc6 (>= 2.31), libssl3 (>= 3.0.0) | libssl1.1, zlib1g"
+assets = [
+    ["target/release/llm-leaders", "usr/bin/", "755"],
+    ["COPYING", "usr/share/doc/llm-leaders/copyright", "644"],
+    ["README.md", "usr/share/doc/llm-leaders/README.md", "644"],
+]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
