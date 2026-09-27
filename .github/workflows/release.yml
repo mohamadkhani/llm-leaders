@@ -33,8 +33,13 @@ jobs:
       - name: Package release tarball
         id: tar
         run: |
-          # VERSION = bare version, no leading 'v' (tag v0.1.0 -> 0.1.0)
+          # VERSION = bare version, no leading 'v' (tag v0.1.0 -> 0.1.0).
+          # Manual runs on a branch have no tag: fall back to 0.0.0.<short sha>
+          # (Debian versions must start with a digit; dots are safe for AUR too)
           VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9] ]]; then
+            VERSION="0.0.0.${GITHUB_SHA::7}"
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           mkdir -p dist
           cp target/release/llm-leaders dist/
