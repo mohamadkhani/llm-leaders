@@ -1,0 +1,11 @@
+Origin: mohamadkhani
+Label: llm-leaders
+Suite: stable
+Codename: stable
+Architectures: amd64
+Components: main
+Description: APT repository for llm-leaders
+Date: Tue, 29 Sep 2026 18:56:53 +0000
+SHA256:
+ 1853d3a46c96acb9a6f1d1b6be8067b76704eb2fcc9615fb02635d3971899e23 721 Packages
+ 1f36142c2534100b41809bb126cc0ad4de74a3b5e568c6221d7f4bd518a5912b 501 Packages.gz
