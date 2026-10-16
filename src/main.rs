@@ -7,7 +7,10 @@ use llm_leaders::{
 };
 
 #[derive(Parser)]
-#[command(name = "llm-leaders", about = "List coding LLMs: OpenRouter prices + arena WebDev rank")]
+#[command(
+    name = "llm-leaders",
+    about = "List coding LLMs: OpenRouter prices + arena WebDev rank"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Command>,
@@ -142,7 +145,14 @@ fn main() -> Result<()> {
     // --list-bench needs only the benchmarks cache; handled before any other
     // network fetch.
     if cli.list_bench {
-        return cmd_list_bench(cli.refresh.as_deref().unwrap_or("none").parse::<Refresh>().unwrap_or_else(|e| e.exit()).ranks);
+        return cmd_list_bench(
+            cli.refresh
+                .as_deref()
+                .unwrap_or("none")
+                .parse::<Refresh>()
+                .unwrap_or_else(|e| e.exit())
+                .ranks,
+        );
     }
     match cli.command {
         Some(Command::Add { ids }) => cmd_add(&ids)?,
@@ -203,16 +213,23 @@ impl std::str::FromStr for Refresh {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use clap::error::ErrorKind;
         let r = match s {
-            "all" => Refresh { prices: true, ranks: true },
-            "prices" => Refresh { prices: true, ranks: false },
-            "ranks" => Refresh { prices: false, ranks: true },
+            "all" => Refresh {
+                prices: true,
+                ranks: true,
+            },
+            "prices" => Refresh {
+                prices: true,
+                ranks: false,
+            },
+            "ranks" => Refresh {
+                prices: false,
+                ranks: true,
+            },
             "none" => Refresh::default(),
             other => {
                 return Err(clap::Error::raw(
                     ErrorKind::InvalidValue,
-                    format!(
-                        "invalid --refresh {other:?} (use prices, ranks, or all)"
-                    ),
+                    format!("invalid --refresh {other:?} (use prices, ranks, or all)"),
                 ))
             }
         };
@@ -307,7 +324,11 @@ fn cmd_remove(ids: &[String]) -> Result<()> {
         return Ok(());
     }
     let removed = models_list::remove_ids(&path, &to_remove)?;
-    println!("Removed {} model(s) from {}:", removed.len(), path.display());
+    println!(
+        "Removed {} model(s) from {}:",
+        removed.len(),
+        path.display()
+    );
     for id in &removed {
         println!("  - {id}");
     }
@@ -340,14 +361,13 @@ fn closest_match(id: &str, catalog: &[openrouter::Model]) -> Option<String> {
     catalog
         .iter()
         .map(|m| {
-            let parts: Vec<&str> = m
-                .id
-                .rsplit('/')
-                .next()
-                .unwrap_or(&m.id)
-                .split(|c: char| !c.is_alphanumeric())
-                .filter(|s| !s.is_empty())
-                .collect();
+            let parts: Vec<&str> =
+                m.id.rsplit('/')
+                    .next()
+                    .unwrap_or(&m.id)
+                    .split(|c: char| !c.is_alphanumeric())
+                    .filter(|s| !s.is_empty())
+                    .collect();
             let shared = target.iter().filter(|t| parts.contains(t)).count();
             (shared, m.id.clone())
         })
@@ -362,8 +382,10 @@ fn interactive_add(
 ) -> Result<Vec<String>> {
     use inquire::MultiSelect;
 
-    let mut opts: Vec<&openrouter::Model> =
-        catalog.iter().filter(|m| !existing.contains(&m.id)).collect();
+    let mut opts: Vec<&openrouter::Model> = catalog
+        .iter()
+        .filter(|m| !existing.contains(&m.id))
+        .collect();
     opts.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
     let display: Vec<String> = opts
@@ -552,10 +574,7 @@ impl AnyRankThresholds {
                 row.capability.as_ref().map(|c| c.standing.rank),
                 self.capability,
             )
-            || rank_within_threshold(
-                row.benchlm.as_ref().map(|s| s.rank),
-                self.benchlm,
-            )
+            || rank_within_threshold(row.benchlm.as_ref().map(|s| s.rank), self.benchlm)
     }
 }
 
@@ -577,7 +596,9 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     };
 
     let catalog = openrouter::fetch_models()?;
-    let scores = arena::get_scores(opts.refresh.ranks)?;
+    // Arena is an optional source: a fetch failure (e.g. a 403 from the
+    // leaderboard) degrades to no arena ranks/Elo instead of failing the run.
+    let scores = arena::get_scores(opts.refresh.ranks).unwrap_or_default();
     // Benchmark payload powers the matcher's oracle tier. It degrades to
     // `None` on failure (one stderr warning), and matching falls back to
     // structure alone — never a hard error.
@@ -616,7 +637,8 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             discount_changed.len()
         );
     }
-    let best_prices = openrouter::fetch_best_prices(&id_list, opts.refresh.prices, &discount_changed)?;
+    let best_prices =
+        openrouter::fetch_best_prices(&id_list, opts.refresh.prices, &discount_changed)?;
 
     // The set of models to rank, in display order. For a curated `--models`
     // list we synthesize a minimal Model for any id missing from the catalog,
@@ -654,7 +676,8 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     if let Some(fc) = &fcat {
         for m in models.iter_mut() {
             if let Some(entry) = fc.get(&m.id) {
-                m.canonical_slug.get_or_insert_with(|| entry.permaslug.clone());
+                m.canonical_slug
+                    .get_or_insert_with(|| entry.permaslug.clone());
             }
         }
     }
@@ -676,8 +699,13 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     };
     let mut cols = BenchCols {
         arena: scores.len(),
-        web: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_WEBSITE))),
-        code: (!opts.no_bench).then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_CODE))),
+        web: (!opts.no_bench).then(|| {
+            bench
+                .as_ref()
+                .map_or(0, |b| b.coverage(or_bench::CAT_WEBSITE))
+        }),
+        code: (!opts.no_bench)
+            .then(|| bench.as_ref().map_or(0, |b| b.coverage(or_bench::CAT_CODE))),
         extra: extra_cat.clone().map(|c| {
             let n = bench.as_ref().map_or(0, |b| b.coverage(&c));
             (c, n)
@@ -804,7 +832,11 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     let dropped = before - rows.len();
 
     if capability.as_ref().is_some_and(|list| !list.is_empty()) {
-        cols.capability = Some(capability.as_ref().map_or(0, benchmark_list::BenchmarkList::len));
+        cols.capability = Some(
+            capability
+                .as_ref()
+                .map_or(0, benchmark_list::BenchmarkList::len),
+        );
     }
     if benchlm.as_ref().is_some_and(|list| !list.is_empty()) {
         cols.benchlm = Some(benchlm.as_ref().map_or(0, benchlm::BenchLm::len));
@@ -830,11 +862,9 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .map_or(u64::MAX, |s| s.rank)
                 .cmp(&b.code.map_or(u64::MAX, |s| s.rank))
         }),
-        "arena-rank" | "rank" => rows.sort_by(|a, b| {
-            a.rank
-                .unwrap_or(u64::MAX)
-                .cmp(&b.rank.unwrap_or(u64::MAX))
-        }),
+        "arena-rank" | "rank" => {
+            rows.sort_by(|a, b| a.rank.unwrap_or(u64::MAX).cmp(&b.rank.unwrap_or(u64::MAX)))
+        }
         "elo" => rows.sort_by(|a, b| {
             b.elo
                 .unwrap_or(f64::MIN)
@@ -863,20 +893,18 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         }),
         "name" => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
         // ctx: larger window first, missing last.
-        "ctx" => rows.sort_by(|a, b| {
-            b.ctx.unwrap_or(0)
-                .cmp(&a.ctx.unwrap_or(0))
-        }),
+        "ctx" => rows.sort_by(|a, b| b.ctx.unwrap_or(0).cmp(&a.ctx.unwrap_or(0))),
         "web-score" | "or-web" => bench_score(&mut rows, &|r| r.web),
         "code-score" | "code" => bench_score(&mut rows, &|r| r.code),
         "bench" => bench_score(&mut rows, &cols.active()),
         "capability" => bench_score(&mut rows, &|r| r.capability.as_ref().map(|c| c.standing)),
         "benchlm" => rows.sort_by(|a, b| {
             let rank = |row: &Row| row.benchlm.as_ref().map_or(u64::MAX, |s| s.rank);
-            let score =
-                |row: &Row| row.benchlm.as_ref().map_or(f64::MIN, |s| s.score);
+            let score = |row: &Row| row.benchlm.as_ref().map_or(f64::MIN, |s| s.score);
             rank(a).cmp(&rank(b)).then_with(|| {
-                score(b).partial_cmp(&score(a)).unwrap_or(std::cmp::Ordering::Equal)
+                score(b)
+                    .partial_cmp(&score(a))
+                    .unwrap_or(std::cmp::Ordering::Equal)
             })
         }),
         other => bail!(
@@ -1081,7 +1109,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     // Code rank leads the table (primary sort); Arena # moved to the tail.
     let mut header: Vec<comfy_table::Cell> = Vec::new();
     if let Some(n) = cols.code {
-        header.push(styled_cell(count_header("Code", n, "\n"), comfy_table::Color::Reset, true));
+        header.push(styled_cell(
+            count_header("Code", n, "\n"),
+            comfy_table::Color::Reset,
+            true,
+        ));
     }
     header.extend(
         ["Model", "Ctx", "In", "Out", "Disc"]
@@ -1089,7 +1121,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
             .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
     );
     if let Some(n) = cols.web {
-        header.push(styled_cell(count_header("Web", n, "\n"), comfy_table::Color::Reset, true));
+        header.push(styled_cell(
+            count_header("Web", n, "\n"),
+            comfy_table::Color::Reset,
+            true,
+        ));
     }
     if let Some((cat, n)) = &cols.extra {
         let title = cat.strip_prefix("models-").unwrap_or(cat);
@@ -1119,9 +1155,17 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         ));
     }
     if cols.capability.is_some() {
-        header.push(styled_cell("Cov".to_string(), comfy_table::Color::Reset, true));
+        header.push(styled_cell(
+            "Cov".to_string(),
+            comfy_table::Color::Reset,
+            true,
+        ));
     }
-    header.push(styled_cell("ID".to_string(), comfy_table::Color::Reset, true));
+    header.push(styled_cell(
+        "ID".to_string(),
+        comfy_table::Color::Reset,
+        true,
+    ));
     t.set_header(header);
     // Price-heat scale over the visible rows (after filtering).
     let inputs: Vec<f64> = rows.iter().filter_map(|r| r.input).collect();
@@ -1149,7 +1193,10 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     // Benchmark-score heat: one scale per column, over the visible scores.
     // Higher = greener, same ramp as Elo.
     let score_scale = |get: &dyn Fn(&Row) -> Option<or_bench::Standing>| {
-        let vals: Vec<f64> = rows.iter().filter_map(|r| get(r).map(|s| s.score)).collect();
+        let vals: Vec<f64> = rows
+            .iter()
+            .filter_map(|r| get(r).map(|s| s.score))
+            .collect();
         (
             vals.iter().cloned().fold(f64::INFINITY, f64::min),
             vals.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
@@ -1243,8 +1290,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 } else {
                     comfy_table::Color::Reset
                 },
-                r.input.map_or(false, |p| p <= 0.0)
-                    || r.discount.map_or(false, |d| d >= 0.30),
+                r.input.map_or(false, |p| p <= 0.0) || r.discount.map_or(false, |d| d >= 0.30),
             ),
         ]);
         if cols.web.is_some() {
@@ -1261,7 +1307,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 false,
             ));
         }
-        cells.push(styled_cell(fmt_rank(r.rank), rank_heat(r.rank, rk_min, rk_max), false));
+        cells.push(styled_cell(
+            fmt_rank(r.rank),
+            rank_heat(r.rank, rk_min, rk_max),
+            false,
+        ));
         if cols.capability.is_some() {
             cells.push(styled_cell(
                 fmt_capability(r.capability.as_ref()),
@@ -1291,7 +1341,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
                 false,
             ));
         }
-        cells.push(styled_cell(r.id.clone(), comfy_table::Color::DarkGrey, false));
+        cells.push(styled_cell(
+            r.id.clone(),
+            comfy_table::Color::DarkGrey,
+            false,
+        ));
         t.add_row(cells);
     }
     // Color the table frame. comfy-table resets styling after each cell
@@ -1310,11 +1364,9 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
 /// content (and its own ANSI codes) intact.
 fn color_borders(table: &str, color: &str, reset: &str) -> String {
     let borders: &[char] = &[
-        '─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
-        '═', '║', '╞', '╡', '╪', '╪', '╪', '╕', '╛', '╘', '╒',
-        '╓', '╖', '╙', '╜', '╟', '╢', '╤', '╧', '╨', '╩', '╦', '╠', '╣', '╬',
-        '╌', '╍', '┄', '┅', '┆', '┇', '┈', '┉', '┊', '┋',
-        '╭', '╮', '╰', '╯',
+        '─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼', '═', '║', '╞', '╡', '╪', '╪', '╪',
+        '╕', '╛', '╘', '╒', '╓', '╖', '╙', '╜', '╟', '╢', '╤', '╧', '╨', '╩', '╦', '╠', '╣', '╬',
+        '╌', '╍', '┄', '┅', '┆', '┇', '┈', '┉', '┊', '┋', '╭', '╮', '╰', '╯',
     ];
     let mut out = String::with_capacity(table.len() * 2);
     for ch in table.chars() {
@@ -1430,8 +1482,7 @@ mod tests {
 
     #[test]
     fn five_any_rank_thresholds_are_per_column() {
-        let thresholds =
-            parse_any_rank_thresholds(&[1, 2, 3, 4, 5]).expect("thresholds");
+        let thresholds = parse_any_rank_thresholds(&[1, 2, 3, 4, 5]).expect("thresholds");
         assert_eq!(
             thresholds,
             AnyRankThresholds {

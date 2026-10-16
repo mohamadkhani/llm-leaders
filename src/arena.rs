@@ -119,23 +119,46 @@ fn scrape() -> Result<Vec<Score>> {
     }
 
     // Sort by rating desc
-    out.sort_by(|a, b| b.rating.partial_cmp(&a.rating).unwrap_or(std::cmp::Ordering::Equal));
+    out.sort_by(|a, b| {
+        b.rating
+            .partial_cmp(&a.rating)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     Ok(out)
 }
 
 /// Get arena scores: fresh cache, else scrape + cache.
-pub fn get_scores(refresh: bool) -> Result<Vec<Score>> {
+///
+/// Returns `None` on failure after one stderr warning — arena is an optional
+/// source, so ranks and Elo degrade to `—` rather than failing the run.
+pub fn get_scores(refresh: bool) -> Option<Vec<Score>> {
     if !refresh {
-        if let Some(c) = load_fresh()? {
-            return Ok(c.entries);
+        match load_fresh() {
+            Ok(Some(c)) => return Some(c.entries),
+            Ok(None) => {}
+            Err(e) => eprintln!("warning: reading arena cache failed: {e}"),
         }
     }
-    let entries = scrape()?;
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-    save(&Cache {
-        schema_version: SCHEMA_VERSION,
-        fetched_at: now,
-        entries: entries.clone(),
-    })?;
-    Ok(entries)
+    match scrape() {
+        Ok(entries) => {
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            if let Err(e) = save(&Cache {
+                schema_version: SCHEMA_VERSION,
+                fetched_at: now,
+                entries: entries.clone(),
+            }) {
+                eprintln!("warning: writing arena cache failed: {e}");
+            }
+            Some(entries)
+        }
+        Err(e) => {
+            eprintln!(
+                "warning: arena.ai leaderboard unavailable ({e}) — arena ranks and Elo hidden"
+            );
+            None
+        }
+    }
 }
