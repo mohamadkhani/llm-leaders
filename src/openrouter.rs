@@ -232,10 +232,7 @@ pub fn fetch_best_prices(
         .collect();
 
     if !missing.is_empty() {
-        eprintln!(
-            "fetching cheapest prices for {} model(s)...",
-            missing.len()
-        );
+        eprintln!("fetching cheapest prices for {} model(s)...", missing.len());
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs();
@@ -293,19 +290,17 @@ fn fetch_best_prices_uncached(
                     // Cheapest endpoint by input price — the same convention
                     // as the OpenRouter website's model cards. Ties break on
                     // output price.
-                    let best = parsed
-                        .data
-                        .endpoints
-                        .iter()
-                        .min_by(|a, b| {
-                            let key = |e: &Endpoint| {
-                                (
-                                    e.pricing.prompt.parse::<f64>().unwrap_or(f64::INFINITY),
-                                    e.pricing.completion.parse::<f64>().unwrap_or(f64::INFINITY),
-                                )
-                            };
-                            key(a).partial_cmp(&key(b)).unwrap_or(std::cmp::Ordering::Equal)
-                        });
+                    let best = parsed.data.endpoints.iter().min_by(|a, b| {
+                        let key = |e: &Endpoint| {
+                            (
+                                e.pricing.prompt.parse::<f64>().unwrap_or(f64::INFINITY),
+                                e.pricing.completion.parse::<f64>().unwrap_or(f64::INFINITY),
+                            )
+                        };
+                        key(a)
+                            .partial_cmp(&key(b))
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    });
                     let entry = match best {
                         Some(e) => BestPrice {
                             input: price_per_m(&e.pricing.prompt),
@@ -324,7 +319,10 @@ fn fetch_best_prices_uncached(
 
     let errs = errors.into_inner().unwrap();
     if !errs.is_empty() {
-        eprintln!("warning: cheapest-price lookup failed for {} model(s)", errs.len());
+        eprintln!(
+            "warning: cheapest-price lookup failed for {} model(s)",
+            errs.len()
+        );
     }
     Ok(out.into_inner().unwrap())
 }
@@ -476,10 +474,7 @@ mod tests {
         let mut m = model(&["text"]);
         m.architecture.as_mut().unwrap().input_modalities =
             vec!["text".to_string(), "image".to_string()];
-        assert!(
-            !m.non_coding(),
-            "image input + text output is coding"
-        );
+        assert!(!m.non_coding(), "image input + text output is coding");
     }
 
     /// Absent on older captures — never an error, just None.

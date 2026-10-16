@@ -72,12 +72,7 @@ impl Benchmarks {
         // they are the same model as their canonical twin, which carries the
         // family's scores.
         let (base, tier) = openrouter_id.split_once(':')?;
-        matches!(tier, "free" | "batch").then(|| {
-            self.scores
-                .get(category)?
-                .get(base)
-                .copied()
-        })?
+        matches!(tier, "free" | "batch").then(|| self.scores.get(category)?.get(base).copied())?
     }
 
     /// Resolve a user-supplied `--bench` value to a full category name: the
@@ -98,8 +93,11 @@ impl Benchmarks {
 
     /// All categories with their coverage, sorted by coverage desc.
     pub fn categories(&self) -> Vec<(String, usize)> {
-        let mut out: Vec<(String, usize)> =
-            self.scores.iter().map(|(k, v)| (k.clone(), v.len())).collect();
+        let mut out: Vec<(String, usize)> = self
+            .scores
+            .iter()
+            .map(|(k, v)| (k.clone(), v.len()))
+            .collect();
         out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         out
     }
@@ -230,7 +228,9 @@ fn build(da_data: HashMap<String, Vec<RawRow>>) -> Benchmarks {
                 display_name: row.display_name.clone().unwrap_or_default(),
             };
             if let Some(da) = row.da_model_id.as_deref().filter(|s| !s.is_empty()) {
-                out.by_da_id.entry(da.to_lowercase()).or_insert_with(|| entry.clone());
+                out.by_da_id
+                    .entry(da.to_lowercase())
+                    .or_insert_with(|| entry.clone());
             }
             if let Some(disp) = row.display_name.as_deref().filter(|s| !s.is_empty()) {
                 out.by_display.entry(disp.to_lowercase()).or_insert(entry);
@@ -333,7 +333,10 @@ mod tests {
         let table = b.scores.get(CAT_WEBSITE).expect("models-website present");
         assert!(!table.is_empty());
         // Rank 1 must be the highest score in the category.
-        let best = table.values().max_by(|a, b| a.score.total_cmp(&b.score)).unwrap();
+        let best = table
+            .values()
+            .max_by(|a, b| a.score.total_cmp(&b.score))
+            .unwrap();
         let rank1 = table.values().filter(|s| s.rank == 1).count();
         assert_eq!(rank1, 1, "exactly one rank-1 entry per category");
         assert_eq!(
@@ -360,7 +363,12 @@ mod tests {
         // A canonical model must have standings wherever the category covers
         // it; find one covered by both default categories.
         let mut checked = 0;
-        for id in b.scores.get(CAT_WEBSITE).expect("website table present").keys() {
+        for id in b
+            .scores
+            .get(CAT_WEBSITE)
+            .expect("website table present")
+            .keys()
+        {
             if let Some(s) = b.standing(CAT_WEBSITE, id) {
                 assert!(s.rank >= 1);
                 checked += 1;
@@ -377,7 +385,9 @@ mod tests {
             assert_eq!(b.standing(CAT_WEBSITE, "z-ai/glm-5.2:batch"), Some(base));
         }
         assert!(
-            b.scores.get(CAT_WEBSITE).map_or(false, |t| !t.contains_key("z-ai/glm-5.2:free")),
+            b.scores
+                .get(CAT_WEBSITE)
+                .map_or(false, |t| !t.contains_key("z-ai/glm-5.2:free")),
             "variant ids must not appear in score tables directly"
         );
     }
@@ -387,7 +397,10 @@ mod tests {
     #[test]
     fn resolve_category_short_form() {
         let b = fixture();
-        assert_eq!(b.resolve_category(CAT_WEBSITE), Some(CAT_WEBSITE.to_string()));
+        assert_eq!(
+            b.resolve_category(CAT_WEBSITE),
+            Some(CAT_WEBSITE.to_string())
+        );
         assert_eq!(
             b.resolve_category("uicomponent"),
             Some("models-uicomponent".to_string())

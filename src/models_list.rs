@@ -58,10 +58,7 @@ pub fn add_ids(path: &Path, to_add: &[String]) -> Result<Vec<String>> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let mut existing: Vec<String> = read_ids(path)?
-        .into_iter()
-        .map(|s| s.to_string())
-        .collect();
+    let mut existing: Vec<String> = read_ids(path)?.into_iter().map(|s| s.to_string()).collect();
     let mut appended = Vec::new();
     for id in to_add {
         if !existing.iter().any(|e| e == id) {

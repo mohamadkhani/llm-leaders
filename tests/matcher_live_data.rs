@@ -66,8 +66,14 @@ fn acceptance_table_on_live_fixtures() {
     // and never crosses onto the pro row.
     assert_eq!(rank_of("deepseek/deepseek-v4-flash"), Some(58));
     assert_eq!(rank_of("deepseek/deepseek-v4-pro"), Some(49));
-    assert_eq!(provenance_of("deepseek/deepseek-v4-pro"), Some(Provenance::Oracle));
-    assert_eq!(provenance_of("deepseek/deepseek-v4-flash"), Some(Provenance::Structural));
+    assert_eq!(
+        provenance_of("deepseek/deepseek-v4-pro"),
+        Some(Provenance::Oracle)
+    );
+    assert_eq!(
+        provenance_of("deepseek/deepseek-v4-flash"),
+        Some(Provenance::Structural)
+    );
 
     // Claude: `max` and `high` are config tiers of the same model. Arena
     // lists both (#1 and #4); one model claims one row — the better one.
@@ -77,7 +83,10 @@ fn acceptance_table_on_live_fixtures() {
 
     // Kimi: oracle-resolved via the da_model_id `kimi-k2.7-code`.
     assert_eq!(rank_of("moonshotai/kimi-k2.7-code"), Some(41));
-    assert_eq!(provenance_of("moonshotai/kimi-k2.7-code"), Some(Provenance::Oracle));
+    assert_eq!(
+        provenance_of("moonshotai/kimi-k2.7-code"),
+        Some(Provenance::Oracle)
+    );
 
     // Tier siblings are the same model as their canonical twin: they inherit
     // its pairing rather than claiming a row of their own.

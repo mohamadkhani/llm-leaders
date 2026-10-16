@@ -410,8 +410,20 @@ mod tests {
             Some("anthropic/claude-opus-5"),
         )];
         let scores = vec![
-            score("claude-opus-5-high", "Claude Opus 5 High", 1, 1600.0, Some("anthropic")),
-            score("claude-opus-5-low", "Claude Opus 5 Low", 4, 1550.0, Some("anthropic")),
+            score(
+                "claude-opus-5-high",
+                "Claude Opus 5 High",
+                1,
+                1600.0,
+                Some("anthropic"),
+            ),
+            score(
+                "claude-opus-5-low",
+                "Claude Opus 5 Low",
+                4,
+                1550.0,
+                Some("anthropic"),
+            ),
         ];
 
         let got = resolve(&models, &scores, None);

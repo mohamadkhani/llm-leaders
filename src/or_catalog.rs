@@ -199,7 +199,9 @@ pub fn get(refresh: bool) -> Option<HashMap<String, CatalogEntry>> {
             Some(entries)
         }
         Err(e) => {
-            eprintln!("warning: OpenRouter catalog unavailable ({e}) — matching without permaslugs");
+            eprintln!(
+                "warning: OpenRouter catalog unavailable ({e}) — matching without permaslugs"
+            );
             None
         }
     }
@@ -221,13 +223,30 @@ mod tests {
         for (id, want) in [
             ("z-ai/glm-5.3", "z-ai/glm-5.3-20260816"),
             ("z-ai/glm-4.5v", "z-ai/glm-4.5v"),
-            ("deepseek/deepseek-v4-flash-0731", "deepseek/deepseek-v4-flash-20260731"),
-            ("deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-flash-20260423"),
-            ("deepseek/deepseek-v4-pro-0813", "deepseek/deepseek-v4-pro-20260813"),
-            ("anthropic/claude-opus-5", "anthropic/claude-opus-5-20260723"),
-            ("moonshotai/kimi-k2.7-code", "moonshotai/kimi-k2.7-code-20260612"),
+            (
+                "deepseek/deepseek-v4-flash-0731",
+                "deepseek/deepseek-v4-flash-20260731",
+            ),
+            (
+                "deepseek/deepseek-v4-flash",
+                "deepseek/deepseek-v4-flash-20260423",
+            ),
+            (
+                "deepseek/deepseek-v4-pro-0813",
+                "deepseek/deepseek-v4-pro-20260813",
+            ),
+            (
+                "anthropic/claude-opus-5",
+                "anthropic/claude-opus-5-20260723",
+            ),
+            (
+                "moonshotai/kimi-k2.7-code",
+                "moonshotai/kimi-k2.7-code-20260612",
+            ),
         ] {
-            let got = cat.get(id).unwrap_or_else(|| panic!("{id} missing from catalog"));
+            let got = cat
+                .get(id)
+                .unwrap_or_else(|| panic!("{id} missing from catalog"));
             assert_eq!(got.permaslug, want, "permaslug for {id}");
         }
     }
@@ -249,6 +268,10 @@ mod tests {
     fn zero_discount_is_none() {
         let cat = fixture();
         let e = cat.get("z-ai/glm-5.3").expect("glm-5.3");
-        assert!(e.discount.is_none(), "expected no discount, got {:?}", e.discount);
+        assert!(
+            e.discount.is_none(),
+            "expected no discount, got {:?}",
+            e.discount
+        );
     }
 }

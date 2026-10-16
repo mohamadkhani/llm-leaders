@@ -45,7 +45,10 @@ const VENDOR_SYNONYMS: &[(&str, &[&str])] = &[
     ("minimax", &["minimax"]),
     ("meta", &["meta", "muse"]),
     ("x-ai", &["spacexai", "x.ai", "x-ai", "grok", "xai"]),
-    ("mistralai", &["mistral", "mistralai", "devstral", "codestral"]),
+    (
+        "mistralai",
+        &["mistral", "mistralai", "devstral", "codestral"],
+    ),
     ("nvidia", &["nvidia", "nemotron"]),
     ("poolside", &["poolside", "laguna"]),
     ("stepfun", &["stepfun", "step"]),
@@ -558,7 +561,10 @@ mod tests {
         for (a, b) in pairs {
             let ia = ModelIdentity::parse(a, None);
             let ib = ModelIdentity::parse(b, None);
-            assert!(!ia.matches(&ib), "{a} must not match {b}\n  {ia:?}\n  {ib:?}");
+            assert!(
+                !ia.matches(&ib),
+                "{a} must not match {b}\n  {ia:?}\n  {ib:?}"
+            );
         }
     }
 
