@@ -5,7 +5,7 @@ Codename: stable
 Architectures: amd64
 Components: main
 Description: APT repository for llm-leaders
-Date: Mon, 16 Nov 2026 07:22:00 +0000
+Date: Mon, 16 Nov 2026 08:41:41 +0000
 SHA256:
- 8bdb12819d15e1e14401492fb47834d255189fc1968515721e2e49c6c60b6662 2163 Packages
- 7bb808ef7ff7018524da14e0065b068155548cbd6729be683913481ecba186db 741 Packages.gz
+ d033d02cf0a12a068884e6d9b0eec84edddbb95dfdcb130f6c2e0f45c124e0b1 2886 Packages
+ e0c485dff44860140c36e80dd332ea6b9a5c899f68f3a9fc774691c77958c533 850 Packages.gz
