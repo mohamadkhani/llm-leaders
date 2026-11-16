@@ -596,8 +596,8 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     };
 
     let catalog = openrouter::fetch_models()?;
-    // Arena is an optional source: a fetch failure (e.g. a 403 from the
-    // leaderboard) degrades to no arena ranks/Elo instead of failing the run.
+    // Arena is an optional source: a fetch failure (e.g. the dataset API
+    // being down) degrades to no arena ranks/Elo instead of failing the run.
     let scores = arena::get_scores(opts.refresh.ranks).unwrap_or_default();
     // Benchmark payload powers the matcher's oracle tier. It degrades to
     // `None` on failure (one stderr warning), and matching falls back to

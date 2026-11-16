@@ -307,7 +307,7 @@ mod tests {
     }
 
     /// Anonymized arena keys are unresolvable by id but resolvable by the
-    /// display name the benchmark shares with the arena scrape.
+    /// display name the benchmark shares with arena rows.
     #[test]
     fn oracle_resolves_by_display_name() {
         let b = fixture();
