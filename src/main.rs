@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use comfy_table::{ContentArrangement, Table};
 
 use llm_leaders::{
-    arena, benchlm, benchmark_list, matcher, models_list, openrouter, or_bench, or_catalog,
+    arena, benchlm, benchmark_list, matcher, models_list, openrouter, or_bench, or_catalog, usage,
 };
 
 #[derive(Parser)]
@@ -20,10 +20,10 @@ struct Cli {
     markdown: bool,
 
     /// Sort column: code-rank (default, asc), arena-rank (asc), elo (desc),
-    /// input (input $/M asc), output (output $/M asc), name (asc), ctx
-    /// (context length desc), or web-score / code-score / bench / capability /
-    /// benchlm (benchmark score desc). "price" is an alias for "input"; old
-    /// keys rank, or-web, code still work.
+    /// input (input $/M asc), output (output $/M asc), mix (blended $/M asc),
+    /// name (asc), ctx (context length desc), or web-score / code-score /
+    /// bench / capability / benchlm (benchmark score desc). "price" is an
+    /// alias for "input"; old keys rank, or-web, code still work.
     #[arg(long, global = true, default_value = "code-rank")]
     sort: String,
 
@@ -36,6 +36,19 @@ struct Cli {
     /// Free models (price 0) always pass. Models with no known price are dropped.
     #[arg(long, global = true)]
     max_output: Option<f64>,
+
+    /// Token-usage mix behind the Mix price column, as percentages that need
+    /// not sum to 100. Named form (any subset): "input=8.1,output=0.4,cache=91.5".
+    /// Positional form: "input,output,cache" — "8.1,0.4,91.5". The mix is saved
+    /// (mix.json) and reused on later runs; the default is 3:1 input:output.
+    #[arg(long, global = true)]
+    mix: Option<String>,
+
+    /// Keep only models whose Mix (usage-mix blended) price is at most this
+    /// (USD per million tokens). Free models (price 0) always pass. Models with
+    /// no known price are dropped.
+    #[arg(long, global = true)]
+    max_mix: Option<f64>,
 
     /// Keep only models whose arena rank is at most this (1 = best). Models with no
     /// arena score are dropped when this is set.
@@ -170,32 +183,52 @@ fn main() -> Result<()> {
                 }
             }
         }
-        None => render_table(&TableOpts {
-            markdown: cli.markdown,
-            sort: cli.sort,
-            max_input: cli.max_input,
-            max_output: cli.max_output,
-            max_rank: cli.max_rank,
-            free: cli.free,
-            discounted: cli.discounted,
-            search: cli.search,
-            bench: cli.bench,
-            no_bench: cli.no_bench,
-            min_score: cli.min_score,
-            min_or_web: cli.min_or_web,
-            min_code: cli.min_code,
-            max_or_web_rank: cli.max_or_web_rank,
-            max_code_rank: cli.max_code_rank,
-            max_any_rank: cli.max_any_rank,
-            all: cli.all,
-            include_non_coding: cli.include_non_coding,
-            refresh: cli
-                .refresh
-                .as_deref()
-                .unwrap_or("none")
-                .parse::<Refresh>()
-                .unwrap_or_else(|e| e.exit()),
-        })?,
+        None => {
+            // Resolve the usage mix: --mix sets and persists it; otherwise
+            // the saved mix, else the 3:1 default.
+            let mix = match &cli.mix {
+                Some(spec) => {
+                    let m = usage::UsageMix::parse(spec)?;
+                    if let Err(e) = m.save() {
+                        eprintln!("warning: writing mix config failed: {e}");
+                    }
+                    eprintln!(
+                        "mix saved: input {:.1}% / output {:.1}% / cache {:.1}%",
+                        m.input, m.output, m.cache
+                    );
+                    m
+                }
+                None => usage::UsageMix::load().unwrap_or_default(),
+            };
+            render_table(&TableOpts {
+                markdown: cli.markdown,
+                sort: cli.sort,
+                max_input: cli.max_input,
+                max_output: cli.max_output,
+                max_mix: cli.max_mix,
+                max_rank: cli.max_rank,
+                free: cli.free,
+                discounted: cli.discounted,
+                search: cli.search,
+                bench: cli.bench,
+                no_bench: cli.no_bench,
+                min_score: cli.min_score,
+                min_or_web: cli.min_or_web,
+                min_code: cli.min_code,
+                max_or_web_rank: cli.max_or_web_rank,
+                max_code_rank: cli.max_code_rank,
+                max_any_rank: cli.max_any_rank,
+                all: cli.all,
+                include_non_coding: cli.include_non_coding,
+                refresh: cli
+                    .refresh
+                    .as_deref()
+                    .unwrap_or("none")
+                    .parse::<Refresh>()
+                    .unwrap_or_else(|e| e.exit()),
+                mix,
+            })?
+        }
     }
     Ok(())
 }
@@ -242,6 +275,7 @@ struct TableOpts {
     sort: String,
     max_input: Option<f64>,
     max_output: Option<f64>,
+    max_mix: Option<f64>,
     max_rank: Option<u64>,
     free: bool,
     discounted: bool,
@@ -257,6 +291,8 @@ struct TableOpts {
     all: bool,
     include_non_coding: bool,
     refresh: Refresh,
+    /// Active token-usage mix behind the Mix price column.
+    mix: usage::UsageMix,
 }
 
 /// Print all benchmark categories with model counts, then exit. With no
@@ -442,6 +478,9 @@ struct Row {
     non_coding: bool,
     input: Option<f64>,
     output: Option<f64>,
+    /// Usage-mix blended price ($/M): the token-share-weighted sum of input,
+    /// output and cache-read prices — the number the Mix column shows.
+    mix: Option<f64>,
     discount: Option<f64>,
     rank: Option<u64>,
     elo: Option<f64>,
@@ -661,6 +700,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                             prompt: "0".to_string(),
                             completion: "0".to_string(),
                             discount: None,
+                            ..Default::default()
                         },
                     },
                 })
@@ -751,13 +791,19 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             // Prefer cheapest-provider pricing when we have it; fall back to
             // the catalog's default-endpoint price.
             let best = best_prices.get(&model.id);
+            let input = best.and_then(|b| b.input).or_else(|| model.input_per_m());
+            let output = best.and_then(|b| b.output).or_else(|| model.output_per_m());
+            let cache_read = best
+                .and_then(|b| b.cache_read)
+                .or_else(|| model.cache_read_per_m());
             Row {
                 id: model.id.clone(),
                 name: model.name.clone(),
                 ctx: model.context_length,
                 non_coding: model.non_coding(),
-                input: best.and_then(|b| b.input).or_else(|| model.input_per_m()),
-                output: best.and_then(|b| b.output).or_else(|| model.output_per_m()),
+                input,
+                output,
+                mix: opts.mix.blended(input, output, cache_read),
                 discount: best.and_then(|b| b.discount),
                 rank,
                 elo,
@@ -777,6 +823,9 @@ fn render_table(opts: &TableOpts) -> Result<()> {
     }
     if let Some(max_out) = opts.max_output {
         rows.retain(|r| r.output.map_or(false, |p| p <= max_out));
+    }
+    if let Some(max_mix) = opts.max_mix {
+        rows.retain(|r| r.mix.is_some_and(|p| p <= max_mix));
     }
     if let Some(max_rk) = opts.max_rank {
         rows.retain(|r| r.rank.map_or(false, |rk| rk <= max_rk));
@@ -891,6 +940,12 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 .partial_cmp(&b.output.unwrap_or(f64::INFINITY))
                 .unwrap_or(std::cmp::Ordering::Equal)
         }),
+        "mix" => rows.sort_by(|a, b| {
+            a.mix
+                .unwrap_or(f64::INFINITY)
+                .partial_cmp(&b.mix.unwrap_or(f64::INFINITY))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        }),
         "name" => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
         // ctx: larger window first, missing last.
         "ctx" => rows.sort_by(|a, b| b.ctx.unwrap_or(0).cmp(&a.ctx.unwrap_or(0))),
@@ -908,7 +963,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
             })
         }),
         other => bail!(
-            "invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|name|ctx|\
+            "invalid --sort {other:?} (use code-rank|arena-rank|elo|input|output|mix|name|ctx|\
              web-score|code-score|bench|capability|benchlm)"
         ),
     }
@@ -927,6 +982,17 @@ fn render_table(opts: &TableOpts) -> Result<()> {
 fn fmt_price(v: Option<f64>) -> String {
     match v {
         Some(p) if p > 0.0 => format!("${:.2}", p),
+        Some(_) => "free".to_string(),
+        None => "—".to_string(),
+    }
+}
+
+/// Mix prices one decimal further out than In/Out: a cache-heavy mix pushes
+/// the blend well under a cent (e.g. $0.043), where the second decimal
+/// would round away the differences between models.
+fn fmt_mix(v: Option<f64>) -> String {
+    match v {
+        Some(p) if p > 0.0 => format!("${:.3}", p),
         Some(_) => "free".to_string(),
         None => "—".to_string(),
     }
@@ -1116,7 +1182,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         ));
     }
     header.extend(
-        ["Model", "Ctx", "In", "Out", "Disc"]
+        ["Model", "Ctx", "Mix", "In", "Out", "Disc"]
             .iter()
             .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
     );
@@ -1177,6 +1243,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     let (out_min, out_max) = (
         outputs.iter().cloned().fold(f64::INFINITY, f64::min),
         outputs.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+    );
+    let mixes: Vec<f64> = rows.iter().filter_map(|r| r.mix).collect();
+    let (mix_min, mix_max) = (
+        mixes.iter().cloned().fold(f64::INFINITY, f64::min),
+        mixes.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
     );
     // Rank-heat scale over the visible ranks.
     let ranks: Vec<u64> = rows.iter().filter_map(|r| r.rank).collect();
@@ -1270,6 +1341,10 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
             {
                 let (c, b) = ctx_style(r.ctx);
                 styled_cell(fmt_ctx(r.ctx), c, b)
+            },
+            {
+                let (c, b) = price_style(r.mix, mix_min, mix_max);
+                styled_cell(fmt_mix(r.mix), c, b)
             },
             {
                 let (c, b) = price_style(r.input, in_min, in_max);
@@ -1390,8 +1465,8 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
         head.push(count_header("Code", n, "<br>"));
         sep.push("---:");
     }
-    head.extend(["Model", "Ctx", "In", "Out", "Disc"].map(String::from));
-    sep.extend(["---", "---:", "---:", "---:", "---:"]);
+    head.extend(["Model", "Ctx", "Mix", "In", "Out", "Disc"].map(String::from));
+    sep.extend(["---", "---:", "---:", "---:", "---:", "---:"]);
     if let Some(n) = cols.web {
         head.push(count_header("Web", n, "<br>"));
         sep.push("---:");
@@ -1426,6 +1501,7 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
         }
         cells.push(r.name.clone());
         cells.push(fmt_ctx(r.ctx));
+        cells.push(fmt_mix(r.mix));
         cells.push(fmt_price(r.input));
         cells.push(fmt_price(r.output));
         cells.push(fmt_discount(r.discount, r.input));
@@ -1462,6 +1538,7 @@ mod tests {
             non_coding: false,
             input: None,
             output: None,
+            mix: None,
             discount: None,
             rank: arena,
             elo: None,

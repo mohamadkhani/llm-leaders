@@ -11,3 +11,4 @@ pub mod models_list;
 pub mod openrouter;
 pub mod or_bench;
 pub mod or_catalog;
+pub mod usage;

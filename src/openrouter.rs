@@ -52,6 +52,10 @@ pub struct Pricing {
     /// USD per token (completion).
     #[serde(default)]
     pub completion: String,
+    /// USD per token (cached-input read). Absent when the provider has no
+    /// cache pricing — cached tokens are then charged as full input.
+    #[serde(default)]
+    pub input_cache_read: Option<String>,
     /// Provider discount fraction (0.35 = 35% off); endpoints API only.
     /// (The catalog-level pricing has no discount; read it via BestPrice.)
     #[serde(default)]
@@ -64,6 +68,10 @@ pub struct Pricing {
 pub struct BestPrice {
     pub input: Option<f64>,
     pub output: Option<f64>,
+    /// Cached-input read price ($/M) on the same endpoint. `None` when the
+    /// provider has no cache pricing.
+    #[serde(default)]
+    pub cache_read: Option<f64>,
     /// Provider discount fraction (0.35 = 35% off) on the cheapest endpoint.
     pub discount: Option<f64>,
     /// Cheapest provider's display name.
@@ -148,7 +156,7 @@ pub struct BestPriceCache {
 
 /// Bump when the cache layout changes; a mismatch is treated as a miss so a
 /// stale file from an older schema is never misread.
-const BEST_PRICE_SCHEMA: u32 = 2;
+const BEST_PRICE_SCHEMA: u32 = 3;
 
 impl BestPrice {
     fn cache_path() -> anyhow::Result<std::path::PathBuf> {
@@ -305,6 +313,7 @@ fn fetch_best_prices_uncached(
                         Some(e) => BestPrice {
                             input: price_per_m(&e.pricing.prompt),
                             output: price_per_m(&e.pricing.completion),
+                            cache_read: e.pricing.input_cache_read.as_deref().and_then(price_per_m),
                             discount: e.pricing.discount,
                             provider: Some(e.name.clone()),
                             fetched_at: None, // stamped by the caller on insert
@@ -353,6 +362,15 @@ impl Model {
     pub fn output_per_m(&self) -> Option<f64> {
         price_per_m(&self.pricing.completion)
     }
+
+    /// Cached-input read price in USD per million tokens. `None` when the
+    /// provider has no cache pricing.
+    pub fn cache_read_per_m(&self) -> Option<f64> {
+        self.pricing
+            .input_cache_read
+            .as_deref()
+            .and_then(price_per_m)
+    }
 }
 
 fn price_per_m(per_token: &str) -> Option<f64> {
@@ -391,6 +409,7 @@ mod tests {
             discount,
             provider: Some("p".into()),
             fetched_at,
+            ..Default::default()
         }
     }
 

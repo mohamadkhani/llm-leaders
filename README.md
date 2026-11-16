@@ -8,11 +8,12 @@ Example — `llm-leaders --all --max-input 1.1 --max-any-rank 30` (cheapest-inpu
 
 ## Columns
 
-| Code | Model | Ctx | In | Out | Disc | Web | Arena | Cap | BLM | Cov | ID |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| OpenRouter coding benchmark rank (`#1` best) | OpenRouter model name | context window in tokens (K/M-suffixed) | input price per million tokens | output price per million tokens | provider discount | OpenRouter website-building benchmark rank (`#1` best) | arena.ai WebDev rank (`#1` best) | BenchmarkList capability rank (`#1` best) | BenchLM overall rank (`#1` best) | number of eligible benchmarks behind the capability score | OpenRouter model ID (copy-paste to use the model) |
+| Code | Model | Ctx | Mix | In | Out | Disc | Web | Arena | Cap | BLM | Cov | ID |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| OpenRouter coding benchmark rank (`#1` best) | OpenRouter model name | context window in tokens (K/M-suffixed) | usage-mix blended price per million tokens | input price per million tokens | output price per million tokens | provider discount | OpenRouter website-building benchmark rank (`#1` best) | arena.ai WebDev rank (`#1` best) | BenchmarkList capability rank (`#1` best) | BenchLM overall rank (`#1` best) | number of eligible benchmarks behind the capability score | OpenRouter model ID (copy-paste to use the model) |
 
 Prices come live from the [OpenRouter model catalog](https://openrouter.ai/api/v1/models), then refined per model with the cheapest provider from the [endpoints API](https://openrouter.ai/api/v1/models) — the same "lowest across providers" price the OpenRouter website shows. Cheapest prices are cached for 1h at `~/.config/llm-leaders/best_prices.json`; the first `--all` run takes ~20s to fetch all providers, subsequent runs are instant.
+`Mix` is the price that matches how you actually spend tokens: the weighted blend of input, output and cached-input prices at your token-usage shares. A coding agent that prompt-caches heavily pays mostly cache reads, so its effective price is neither `In` nor `Out` alone. Set the weights with `--mix input=8.1,output=0.4,cache=91.5` (percentages; they need not sum to 100 — they are normalized. The positional shorthand `8.1,0.4,91.5` works too). The mix is saved to `~/.config/llm-leaders/mix.json` and reused on later runs; the default is 3:1 input:output. A model without cache pricing charges its cached share as full input. `--sort mix` sorts by the blended price. `Mix` shows three decimals — a cache-heavy mix pushes the blend well under a cent, where two decimals would round away the differences between models.
 Ranks come from Arena's official public dataset [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) (Hugging Face, CC BY 4.0) — the `webdev` subset's `overall` category, which snapshots the [arena.ai WebDev leaderboard](https://arena.ai/leaderboard/code/webdev) daily. The leaderboard page itself rejects non-browser clients behind a Cloudflare challenge, so the dataset is the reliable machine-readable channel for the same data. Values are cached for 5h at `~/.config/llm-leaders/arena.json`. The Arena header shows the leaderboard denominator on a second line (`Arena` / `150`). Arena Elo is not shown, but still drives Model value-for-money heat and `--sort elo`.
 Benchmark columns (Web = `models-website`, Code = `models-codecategories`) come from OpenRouter's frontend benchmarks endpoint, keyed by OpenRouter model ID — only canonical models are benchmarked, so tier variants (`:free` etc.) show `—`. Terminal rank cells show only the bare number to keep the table compact; Markdown keeps the `#rank` form. Their underlying scores still drive heat colors, benchmark sorting, and score filters. Cached for 5h at `~/.config/llm-leaders/benchmarks.json`. Each header shows its coverage on a second line (`Code` / `122`) — a `#1` in a sparse category is not a `#1` of 122. Note the scales differ on purpose: arena ranks a *configuration* (e.g. kimi-k3-max), the benchmarks score the *base model* — the columns sit side by side so the mismatch stays visible.
 
@@ -20,7 +21,7 @@ Benchmark columns (Web = `models-website`, Code = `models-codecategories`) come 
 
 `BLM` is an independent overall rank from [BenchLM](https://benchlm.ai/models), covering its scored primary and sibling models. BenchLM provides explicit ranks for primary models. Scored siblings use a derived competition rank: their score is placed among the ranked primary-model scores, so tied scores share a rank. `--sort benchlm` follows that displayed rank, then score as a tiebreak. Matching first uses the OpenRouter model tail ID against the BenchLM slug, then the normalized display name. The endpoint's Next.js build ID is discovered from the models page; parsed data is cached for 5h at `~/.config/llm-leaders/benchlm.json`. `--no-bench` hides the column.
 
-Cache TTLs at a glance: prices 5-min catalog / 1h endpoints (15-min discount check), arena 5h, benchmarks 5h, capability 5h, BenchLM 5h. `--refresh` busts caches selectively.
+Cache TTLs at a glance: prices 5-min catalog / 1h endpoints (15-min discount check), arena 5h, benchmarks 5h, capability 5h, BenchLM 5h. `--refresh` busts caches selectively. The usage mix (`mix.json`) persists until changed.
 
 Non-coding models (image/video generators, music/lyric/audio/speech TTS/STT, embedders, rerankers) are dropped by default — `--include-non-coding` shows them. The signal is OpenRouter's own `architecture.output_modalities` from the v1 API: a coding model outputs text only, while image/video/audio/speech/transcription/embeddings/rerank outputs mark a non-coding model. It is authoritative and catches models a token list would miss (e.g. Lyria, which has `quick_start_example_type: null` but outputs `text+audio`). There is no hardcoded token list: a substring heuristic decays against the catalog and silently drops coding models whose names happen to contain a token (e.g. "Thinking Machines: Inkling", which outputs text).
 
@@ -30,7 +31,7 @@ The terminal table uses heat scales, all computed over the rows actually display
 - **Ctx** — green = largest context window in view, scaling through yellow to red = smallest.
 - **Arena** — green = best rank in view, scaling through yellow to red = worst.
 - **Web / Code / bench columns / Cap / BLM** — green = highest score in view, same ramp as Elo.
-- **In $/M / Out $/M** — green = cheapest in view, scaling through yellow to red = priciest.
+- **Mix $/M / In $/M / Out $/M** — green = cheapest in view, scaling through yellow to red = priciest.
 
 Columns with no spread (e.g. a single-row result) are left uncolored.
 
@@ -45,13 +46,15 @@ llm-leaders
 llm-leaders --markdown
 
 # sort by arena rank (asc), arena elo (desc), input price (asc), output price
-# (asc), name (asc), context window (desc), or a benchmark score (desc):
-# web-score, code-score, bench (the --bench column when set, else Web Rank),
-# or capability (BenchmarkList). benchlm sorts by its displayed rank.
+# (asc), mix price (asc), name (asc), context window (desc), or a benchmark
+# score (desc): web-score, code-score, bench (the --bench column when set,
+# else Web Rank), or capability (BenchmarkList). benchlm sorts by its
+# displayed rank.
 llm-leaders --sort arena-rank
 llm-leaders --sort elo
 llm-leaders --sort input
 llm-leaders --sort output
+llm-leaders --sort mix
 llm-leaders --sort name
 llm-leaders --sort ctx
 llm-leaders --sort web-score
@@ -64,6 +67,13 @@ llm-leaders --max-input 1
 
 # keep only models with output price at most $1/M
 llm-leaders --max-output 1
+
+# set the token-usage mix behind the Mix column (agent profile: 8.1% input,
+# 0.4% output, 91.5% cached input) — saved and reused on later runs
+llm-leaders --mix input=8.1,output=0.4,cache=91.5
+
+# keep only models whose Mix (blended) price is at most $0.5/M
+llm-leaders --max-mix 0.5
 
 # keep only models ranked in the arena top 20 (models with no arena score
 # are dropped when this filter is set)
