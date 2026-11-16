@@ -485,6 +485,10 @@ struct Row {
     non_coding: bool,
     input: Option<f64>,
     output: Option<f64>,
+    /// Cached-input read price ($/M). `None` when the provider reports no
+    /// cache pricing — the Cache column then shows `—` (while Mix charges
+    /// the cached share as full input).
+    cache_read: Option<f64>,
     /// Usage-mix blended price ($/M): the token-share-weighted sum of input,
     /// output and cache-read prices — the number the Mix column shows.
     mix: Option<f64>,
@@ -810,6 +814,7 @@ fn render_table(opts: &TableOpts) -> Result<()> {
                 non_coding: model.non_coding(),
                 input,
                 output,
+                cache_read,
                 mix: opts.mix.blended(input, output, cache_read),
                 discount: best.and_then(|b| b.discount),
                 rank,
@@ -1000,10 +1005,10 @@ fn fmt_price(v: Option<f64>) -> String {
     }
 }
 
-/// Mix prices one decimal further out than In/Out: a cache-heavy mix pushes
-/// the blend well under a cent (e.g. $0.043), where the second decimal
+/// Mix and cache prices one decimal further out than In/Out: a cache-heavy
+/// mix pushes both well under a cent (e.g. $0.043), where the second decimal
 /// would round away the differences between models.
-fn fmt_mix(v: Option<f64>) -> String {
+fn fmt_price3(v: Option<f64>) -> String {
     match v {
         Some(p) if p > 0.0 => format!("${:.3}", p),
         Some(_) => "free".to_string(),
@@ -1195,7 +1200,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
         ));
     }
     header.extend(
-        ["Model", "Ctx", "Mix", "In", "Out", "Disc"]
+        ["Model", "Ctx", "Mix", "In", "Out", "Cache", "Disc"]
             .iter()
             .map(|h| styled_cell(h.to_string(), comfy_table::Color::Reset, true)),
     );
@@ -1261,6 +1266,11 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
     let (mix_min, mix_max) = (
         mixes.iter().cloned().fold(f64::INFINITY, f64::min),
         mixes.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+    );
+    let caches: Vec<f64> = rows.iter().filter_map(|r| r.cache_read).collect();
+    let (cache_min, cache_max) = (
+        caches.iter().cloned().fold(f64::INFINITY, f64::min),
+        caches.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
     );
     // Rank-heat scale over the visible ranks.
     let ranks: Vec<u64> = rows.iter().filter_map(|r| r.rank).collect();
@@ -1357,7 +1367,7 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
             },
             {
                 let (c, b) = price_style(r.mix, mix_min, mix_max);
-                styled_cell(fmt_mix(r.mix), c, b)
+                styled_cell(fmt_price3(r.mix), c, b)
             },
             {
                 let (c, b) = price_style(r.input, in_min, in_max);
@@ -1366,6 +1376,10 @@ fn print_table(rows: &[Row], cols: &BenchCols) {
             {
                 let (c, b) = price_style(r.output, out_min, out_max);
                 styled_cell(fmt_price(r.output), c, b)
+            },
+            {
+                let (c, b) = price_style(r.cache_read, cache_min, cache_max);
+                styled_cell(fmt_price3(r.cache_read), c, b)
             },
             styled_cell(
                 fmt_discount(r.discount, r.input),
@@ -1478,8 +1492,8 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
         head.push(count_header("Code", n, "<br>"));
         sep.push("---:");
     }
-    head.extend(["Model", "Ctx", "Mix", "In", "Out", "Disc"].map(String::from));
-    sep.extend(["---", "---:", "---:", "---:", "---:", "---:"]);
+    head.extend(["Model", "Ctx", "Mix", "In", "Out", "Cache", "Disc"].map(String::from));
+    sep.extend(["---", "---:", "---:", "---:", "---:", "---:", "---:"]);
     if let Some(n) = cols.web {
         head.push(count_header("Web", n, "<br>"));
         sep.push("---:");
@@ -1514,9 +1528,10 @@ fn print_markdown(rows: &[Row], cols: &BenchCols) {
         }
         cells.push(r.name.clone());
         cells.push(fmt_ctx(r.ctx));
-        cells.push(fmt_mix(r.mix));
+        cells.push(fmt_price3(r.mix));
         cells.push(fmt_price(r.input));
         cells.push(fmt_price(r.output));
+        cells.push(fmt_price3(r.cache_read));
         cells.push(fmt_discount(r.discount, r.input));
         if cols.web.is_some() {
             cells.push(fmt_bench_markdown(r.web));
@@ -1551,6 +1566,7 @@ mod tests {
             non_coding: false,
             input: None,
             output: None,
+            cache_read: None,
             mix: None,
             discount: None,
             rank: arena,
