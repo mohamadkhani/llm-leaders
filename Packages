@@ -34,3 +34,21 @@ Description: Terminal tool ranking coding LLMs by arena.ai WebDev Elo with live 
  A CLI that lists coding LLMs with their OpenRouter prices and arena.ai
  WebDev Elo score, side by side.
 
+Package: llm-leaders
+Version: 0.9.2
+Architecture: amd64
+Maintainer: Mohammadreza Khani <mohamadkhani14@gmail.com>
+Installed-Size: 1744
+Depends: libc6 (>= 2.31), libssl3 (>= 3.0.0) | libssl1.1, zlib1g (>= 1:1.1.4)
+Filename: ./llm-leaders_0.9.2_amd64.deb
+Size: 1729104
+MD5sum: f31c28774aae17846f90cd8eb544ae2a
+SHA1: 349581ef88257e26997f0bc048cf1b1e49109c7f
+SHA256: ecd6c22493d2a438305b95bb15269de19c2c691e2b950f5481372d9537b0ec14
+Section: utils
+Priority: optional
+Homepage: https://github.com/mohamadkhani/llm-leaders
+Description: Terminal tool ranking coding LLMs by arena.ai WebDev Elo with live OpenRouter pricing
+ A CLI that lists coding LLMs with their OpenRouter prices and arena.ai
+ WebDev Elo score, side by side.
+
