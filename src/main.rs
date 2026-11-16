@@ -130,6 +130,11 @@ struct Cli {
     #[arg(long, global = true)]
     include_non_coding: bool,
 
+    /// Show `:batch` tier variants (the batch-discounted endpoint of a model,
+    /// priced separately but ranked as the same model). Default: hide them.
+    #[arg(long, global = true)]
+    include_batch: bool,
+
     /// Force-refresh caches: `prices` (catalog + endpoints), `ranks` (arena +
     /// benchmarks + capability + BenchLM), `all`. Bare `--refresh` means
     /// `all` (muscle memory).
@@ -220,6 +225,7 @@ fn main() -> Result<()> {
                 max_any_rank: cli.max_any_rank,
                 all: cli.all,
                 include_non_coding: cli.include_non_coding,
+                include_batch: cli.include_batch,
                 refresh: cli
                     .refresh
                     .as_deref()
@@ -290,6 +296,7 @@ struct TableOpts {
     max_any_rank: Vec<u64>,
     all: bool,
     include_non_coding: bool,
+    include_batch: bool,
     refresh: Refresh,
     /// Active token-usage mix behind the Mix price column.
     mix: usage::UsageMix,
@@ -877,6 +884,12 @@ fn render_table(opts: &TableOpts) -> Result<()> {
         // When the field is absent (older captures, v1-only runs) the model
         // is shown — there is no signal to drop it.
         rows.retain(|r| !r.non_coding);
+    }
+    if !opts.include_batch {
+        // A `:batch` variant is the batch-discounted endpoint of a model —
+        // same rank, separate pricing. Hidden by default so each model
+        // appears once; `--include-batch` shows the variant rows too.
+        rows.retain(|r| r.id.split_once(':').is_none_or(|(_, tier)| tier != "batch"));
     }
     let dropped = before - rows.len();
 
